@@ -11,9 +11,9 @@ play :-
     seed_random,
     display_menu,
     read(GameType),
-    configure_game(GameType, GameConfig),
+    configure_game(GameType, GameConfig, Difficulty1, Difficulty2),
     initial_state(GameConfig, GameState),
-    game_loop(GameState).
+    game_loop(GameState, Difficulty1, Difficulty2).
 
 % Seed the random number generator
 seed_random :-
@@ -35,15 +35,15 @@ display_menu :-
 % Configure the game based on the selected game type
 configure_game(1, [board_size(5), player1(blue), player2(white), optional_rules([]), player1_name('Player 1'), player2_name('Player 2')]) :-
     format('Starting Human vs Human game...~n', []).
-configure_game(2, [board_size(5), player1(blueH), player2(whitePC), difficulty(Level), optional_rules([]), player1_name('Player 1'), player2_name('Computer')]) :-
+configure_game(2, [board_size(5), player1(blueH), player2(whitePC), difficulty(Difficulty), optional_rules([]), player1_name('Player 1'), player2_name('Computer')], Difficulty, _) :-
     format('Select difficulty level for Computer:~n', []),
     format('1. Random~n', []),
     format('2. Greedy~n', []),
     format('3. Minimax~n', []),
     format('Enter your choice (1-3): ', []),
-    read(Level),
-    format('Starting Human vs Computer game with difficulty level ~w...~n', [Level]).
-configure_game(3, [board_size(5), player1(bluePC), player2(whiteH), optional_rules([]), player1_name('Computer'), player2_name('Player 2')]) :-
+    read(Difficulty),
+    format('Starting Human vs Computer game with difficulty level ~w...~n', [Difficulty]).
+configure_game(3, [board_size(5), player1(bluePC), player2(whiteH), difficulty(Difficulty), optional_rules([]), player1_name('Computer'), player2_name('Player 2')], Difficulty, _) :-
     format('Select difficulty level for Computer:~n', []),
     format('1. Random~n', []),
     format('2. Greedy~n', []),
@@ -51,7 +51,7 @@ configure_game(3, [board_size(5), player1(bluePC), player2(whiteH), optional_rul
     format('Enter your choice (1-3): ', []),
     read(Difficulty),
     format('Starting Computer vs Human game with difficulty level ~w...~n', [Difficulty]).
-configure_game(4, [board_size(5), player1(computer1), player2(computer2), optional_rules([]), player1_name('Computer 1'), player2_name('Computer 2')]) :-
+configure_game(4, [board_size(5), player1(computer1), player2(computer2), optional_rules([]), player1_name('Computer 1'), player2_name('Computer 2')], Difficulty1, Difficulty2) :-
     format('Select difficulty level for Computer 1:~n', []),
     format('1. Random~n', []),
     format('2. Greedy~n', []),
@@ -67,14 +67,14 @@ configure_game(4, [board_size(5), player1(computer1), player2(computer2), option
     format('Starting Computer vs Computer game with difficulty levels ~w and ~w...~n', [Difficulty1, Difficulty2]).
 
 % Main game loop
-game_loop(GameState) :-
+game_loop(GameState, Difficulty1, Difficulty2) :-
     display_game(GameState),
     ( game_over(GameState, Winner) ->
         format('Game over! Winner: ~w~n', [Winner])
-    ; get_player_move(GameState, Move),
+    ; get_player_move(GameState, Difficulty1, Difficulty2, Move),
     format('Debug: Player move: ~w~n', [Move]),
     move(GameState, Move, NewGameState),
-    game_loop(NewGameState)).
+    game_loop(NewGameState, Difficulty1, Difficulty2)).
 
 % initial_state(+GameConfig, -GameState)
 % Sets up the initial game state based on the provided configuration.
@@ -186,7 +186,7 @@ format_pieces(Pieces) :-
     fail.
 
 % Get the player's move
-get_player_move(GameState, Move) :-
+get_player_move(GameState, Difficulty1, Difficulty2, Move) :-
     GameState = state(_, Player, _, Phase),
     format('Debug: Current player is ~w~n', [Player]),  % Add this line to print the current player
     valid_moves(GameState, Moves),
@@ -196,23 +196,23 @@ get_player_move(GameState, Move) :-
         Move = skip
     ; (Player = whitePC ->
         format('Matched Player = whitePC~n', []),
-        choose_move(GameState, Move)
+        choose_move(GameState, Difficulty1, Move)
     ; Player = bluePC ->
         format('Matched Player = bluePC~n', []),
-        choose_move(GameState, Move)
+        choose_move(GameState, Difficulty1, Move)
     ; Player = computer1 ->
         format('Matched Player = computer1~n', []),
-        choose_move(GameState, Move)
+        choose_move(GameState, Difficulty1, Move)
     ; Player = computer2 ->
         format('Matched Player = computer2~n', []),
-        choose_move(GameState, Move)
+        choose_move(GameState, Difficulty2, Move)
     ; % Otherwise, prompt the human player for input
         format('Enter your move, X = row, Y = column (e.g., place(X,Y) or stack(X,Y,A,B)): ~n', []),
         read(InputMove),
         (valid_move(GameState, InputMove) ->
             Move = InputMove
         ; format('Invalid move! Try again.~n', []),
-          get_player_move(GameState, Move)
+          get_player_move(GameState, Difficulty1, Difficulty2, Move)
         )
     )).
 
@@ -390,13 +390,108 @@ calculate_new_stack(Player-SourceCount, n-1, Player-NewCount) :-
     format('Adding to neutral stack. New stack: ~w~n', [Player-NewCount]).
 
 % Choose a move based on the level
-choose_move(GameState, Move) :-
+choose_move(GameState, Difficulty, Move) :-
     GameState = state(_, Player, _, Phase),
-    format('Debug: Choosing move for ~w~n', [Player]),
+    format('Debug: Choosing move for ~w with difficulty ~w~n', [Player, Difficulty]),
     valid_moves(GameState, Moves),
     format('Debug: Valid moves for computer: ~w~n', [Moves]),
-    random_member(Move, Moves),
+    (Phase = setup ->
+        format('Debug: Doing random setup~n', []),
+        random_member(Move, Moves)  % Random move for setup phase
+    ;
+        % Choose move based on difficulty level
+        (Difficulty = 1 ->
+            random_member(Move, Moves)  % Random move for level 1
+        ; Difficulty = 2 ->
+            choose_greedy_move(GameState, Moves, Move)  % Greedy move for level 2
+        ; Difficulty = 3 ->
+            minimax(GameState, 3, true, Move, _)  % Minimax move for level 3
+        )
+    ),
     format('Computer chooses move: ~w~n', [Move]).
+
+% Calculate the value of a game state by finding the tallest stack created by the player
+value(state(Board, Player, _, _), Player, Value) :-
+    findall(Count, (
+        member(Row, Board),
+        member(Player-Count, Row)
+    ), Counts),
+    format('Debug: Player ~w stack counts: ~w~n', [Player, Counts]),
+    max_member(Value, Counts).
+
+% Calculate the value of a move by simulating the move and evaluating the resulting game state
+move_value(GameState, stack(Y1, X1, Y2, X2), Value) :-
+    move(GameState, stack(Y1, X1, Y2, X2), state(NewBoard, _, _, _)),
+    nth1(Y2, NewBoard, Row),
+    nth1(X2, Row, Player-NewCount),
+    Value is NewCount.
+
+% Choose the best move based on the greedy algorithm
+choose_greedy_move(GameState, Moves, BestMove) :-
+    format('Debug: Entering choose_greedy_move~n', []),
+    findall(Value-Move, (
+        member(Move, Moves),
+        move_value(GameState, Move, Value)
+    ), MoveValues),
+    format('Debug: Move values: ~w~n', [MoveValues]),
+    max_member(_-BestMove, MoveValues).
+
+% Evaluate the game state by finding the tallest stack created by the player
+evaluate(state(Board, Player, _, _), Score) :-
+    findall(Count, (
+        member(Row, Board),
+        member(Player-Count, Row)
+    ), Counts),
+    max_member(Score, Counts).
+
+% Minimax algorithm with depth limit
+minimax(GameState, Depth, MaxPlayer, BestMove, BestValue) :-
+    format('Debug: Entering minimax with Depth ~w and MaxPlayer ~w~n', [Depth, MaxPlayer]),
+    Depth > 0,
+    valid_moves(GameState, Moves),
+    Moves \= [],
+    format('Debug: Valid moves: ~w~n', [Moves]),
+    NewDepth is Depth - 1,
+    findall(Value-Move, (
+        member(Move, Moves),
+        format('Debug: Simulating move: ~w~n', [Move]),
+        move(GameState, Move, NewGameState),
+        minimax_value(NewGameState, NewDepth, MaxPlayer, Value),
+        format('Debug: Move ~w has value ~w~n', [Move, Value])
+    ), MoveValues),
+    format('Debug: Move values: ~w~n', [MoveValues]),
+    (MaxPlayer = true ->
+        max_member(BestValue-BestMove, MoveValues),
+        format('Debug: MaxPlayer choosing move: ~w with value: ~w~n', [BestMove, BestValue])
+    ;
+        min_member(BestValue-BestMove, MoveValues),
+        format('Debug: MinPlayer choosing move: ~w with value: ~w~n', [BestMove, BestValue])
+    ).
+
+% Base case: evaluate the game state when depth is 0 or no moves are available
+minimax(GameState, 0, _, _, Value) :-
+    format('Debug: Base case reached with Depth 0~n', []),
+    evaluate(GameState, Value),
+    format('Debug: Evaluated value: ~w~n', [Value]).
+minimax(GameState, _, _, _, Value) :-
+    format('Debug: Base case reached with no valid moves~n', []),
+    valid_moves(GameState, Moves),
+    Moves = [],
+    evaluate(GameState, Value),
+    format('Debug: Evaluated value: ~w~n', [Value]).
+
+% Determine the value for the minimax algorithm
+minimax_value(GameState, Depth, MaxPlayer, Value) :-
+    format('Debug: Entering minimax_value with Depth ~w and MaxPlayer ~w~n', [Depth, MaxPlayer]),
+    (MaxPlayer = true ->
+        minimax(GameState, Depth, false, _, Value),
+        format('Debug: MaxPlayer value: ~w~n', [Value])
+    ;
+        minimax(GameState, Depth, true, _, Value),
+        format('Debug: MinPlayer value: ~w~n', [Value])
+    ).
+
+
 
 % Tests
 :- begin_tests(game_tests).
