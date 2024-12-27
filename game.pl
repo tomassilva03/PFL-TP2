@@ -8,15 +8,23 @@
 
 % Display the game menu and start the game
 play :-
+    seed_random,
     display_menu,
     read(GameType),
     configure_game(GameType, GameConfig),
     initial_state(GameConfig, GameState),
     game_loop(GameState).
 
+% Seed the random number generator
+seed_random :-
+    statistics(runtime, [Milliseconds|_]),
+    Seed is Milliseconds mod 10000,
+    setrand(Seed),
+    format('Debug: Random generator seeded with value ~w~n', [Seed]).
+
 % Display the game menu
 display_menu :-
-    format('Welcome to the Game!~n', []),
+    format('Welcome to the Game of STAQS!~n', []),
     format('Select game type:~n', []),
     format('1. Human vs Human (H/H)~n', []),
     format('2. Human vs Computer (H/PC)~n', []),
@@ -27,7 +35,7 @@ display_menu :-
 % Configure the game based on the selected game type
 configure_game(1, [board_size(5), player1(blue), player2(white), optional_rules([]), player1_name('Player 1'), player2_name('Player 2')]) :-
     format('Starting Human vs Human game...~n', []).
-configure_game(2, [board_size(5), player1(blue), player2(computer), difficulty(Level), optional_rules([]), player1_name('Player 1'), player2_name('Computer')]) :-
+configure_game(2, [board_size(5), player1(blueH), player2(whitePC), difficulty(Level), optional_rules([]), player1_name('Player 1'), player2_name('Computer')]) :-
     format('Select difficulty level for Computer:~n', []),
     format('1. Random~n', []),
     format('2. Greedy~n', []),
@@ -35,7 +43,7 @@ configure_game(2, [board_size(5), player1(blue), player2(computer), difficulty(L
     format('Enter your choice (1-3): ', []),
     read(Level),
     format('Starting Human vs Computer game with difficulty level ~w...~n', [Level]).
-configure_game(3, [board_size(5), player1(computer), player2(white), optional_rules([]), player1_name('Computer'), player2_name('Player 2')]) :-
+configure_game(3, [board_size(5), player1(bluePC), player2(whiteH), optional_rules([]), player1_name('Computer'), player2_name('Player 2')]) :-
     format('Select difficulty level for Computer:~n', []),
     format('1. Random~n', []),
     format('2. Greedy~n', []),
@@ -64,15 +72,14 @@ game_loop(GameState) :-
     ( game_over(GameState, Winner) ->
         format('Game over! Winner: ~w~n', [Winner])
     ; get_player_move(GameState, Move),
-      (Move = exit ->
-          format('Exiting game.~n', []),
-          halt
-      ; move(GameState, Move, NewGameState),
-        game_loop(NewGameState) ) ).
+    format('Debug: Player move: ~w~n', [Move]),
+    move(GameState, Move, NewGameState),
+    game_loop(NewGameState)).
 
 % initial_state(+GameConfig, -GameState)
 % Sets up the initial game state based on the provided configuration.
-initial_state(GameConfig, state(Board, CurrentPlayer, Pieces, Phase)) :-
+initial_state(GameConfig, GameState) :-
+    GameState = state(Board, CurrentPlayer, Pieces, Phase),
     % Extract configuration parameters
     ( member(board_size(BoardSize), GameConfig) -> true ; BoardSize = 5 ),
     ( member(player1(Player1), GameConfig) -> true ; Player1 = blue ),
@@ -89,7 +96,7 @@ initial_state(GameConfig, state(Board, CurrentPlayer, Pieces, Phase)) :-
     CurrentPlayer = Player1,
     
     % Set the initial pieces for each player
-    Pieces = [blue-4, white-4], % Ensure this format is used regardless of Player2 being a computer or human
+    Pieces = [Player1-4, Player2-4], % Ensure this format is used regardless of Player2 being a computer or human
     
     % Set the initial phase
     Phase = setup,
@@ -115,6 +122,7 @@ initialize_row(BoardSize, Row) :-
 % Display the game state
 display_game(state(Board, Player, Pieces, Phase)) :-
     format('Debug: Entering display_game~n', []),
+    format('Debug: Game state: ~w~n', [state(Board, Player, Pieces, Phase)]),
     (print_board(Board) -> 
         format('Debug: Finished printing board~n', [])
     ; 
@@ -157,34 +165,56 @@ print_row([Cell|Rest]) :-
 % Write a piece or stack with fixed width for all cells
 write_piece(n-1) :- write(' neutral-1 '). 
 write_piece(e-0) :- write('  empty-0  '). 
-write_piece(blue-Count) :- format('   blue-~d  ', [Count]).
-write_piece(white-Count) :- format('  white-~d  ', [Count]).
+write_piece(Player1-Count) :- format('   ~w-~d  ', [Player1, Count]).
+write_piece(Player2-Count) :- format('  ~w-~d  ', [Player2, Count]).
 
 % Display Pieces in proper format
 format_pieces([blue-N, white-M]) :-
     format('Debug: In format_pieces with blue = ~w and white = ~w~n', [N, M]),
     format('blue: ~d pieces, white: ~d pieces~n', [N, M]).
+format_pieces([blueH-N, whitePC-M]) :-
+    format('Debug: In format_pieces with blue = ~w and computer = ~w~n', [N, M]),
+    format('blue: ~d pieces, computer: ~d pieces~n', [N, M]).
+format_pieces([bluePC-N, whiteH-M]) :-
+    format('Debug: In format_pieces with computer = ~w and white = ~w~n', [N, M]),
+    format('computer: ~d pieces, white: ~d pieces~n', [N, M]).
+format_pieces([computer1-N, computer2-M]) :-
+    format('Debug: In format_pieces with computer = ~w and computer = ~w~n', [N, M]),
+    format('computer1: ~d pieces, computer2: ~d pieces~n', [N, M]).
 format_pieces(Pieces) :-
     format('Error: Invalid Pieces list: ~w~n', [Pieces]),
     fail.
 
 % Get the player's move
-get_player_move(state(_, Player, _, _), Move) :-
-    (Player = computer ->
-        % Generate a move for the computer based on difficulty
-        choose_move(state(_, Player, _, _), Move)
+get_player_move(GameState, Move) :-
+    GameState = state(_, Player, _, Phase),
+    format('Debug: Current player is ~w~n', [Player]),  % Add this line to print the current player
+    valid_moves(GameState, Moves),
+    (Moves = [] ->
+        % No moves available, skip the turn
+        format('Player ~w has no valid moves and will skip their turn.~n', [Player]),
+        Move = skip
+    ; (Player = whitePC ->
+        format('Matched Player = whitePC~n', []),
+        choose_move(GameState, Move)
+    ; Player = bluePC ->
+        format('Matched Player = bluePC~n', []),
+        choose_move(GameState, Move)
+    ; Player = computer1 ->
+        format('Matched Player = computer1~n', []),
+        choose_move(GameState, Move)
+    ; Player = computer2 ->
+        format('Matched Player = computer2~n', []),
+        choose_move(GameState, Move)
     ; % Otherwise, prompt the human player for input
         format('Enter your move, X = row, Y = column (e.g., place(X,Y) or stack(X,Y,A,B)): ~n', []),
         read(InputMove),
-        (InputMove = exit ->
-            Move = exit
-        ; valid_move(state(_, Player, _, _), InputMove) ->
+        (valid_move(GameState, InputMove) ->
             Move = InputMove
         ; format('Invalid move! Try again.~n', []),
-          get_player_move(state(_, Player, _, _), Move)
+          get_player_move(GameState, Move)
         )
-    ).
-
+    )).
 
 % Check if the move is valid in the setup phase
 valid_move(state(Board, Player, Pieces, setup), place(Y, X)) :-
@@ -216,10 +246,14 @@ move(state(Board, Player, Pieces, play), skip, state(Board, NextPlayer, Pieces, 
 % Apply the move to the game state and return the new state
 move(state(Board, Player, Pieces, setup), place(Y, X), state(NewBoard, NextPlayer, NewPieces, NewPhase)) :-
     format('Applying move place(~w, ~w) for player ~w~n', [Y, X, Player]),
+    format('Debug: here 1~n', []),
     place_piece(Board, X, Y, Player, NewBoard),
+    format('Debug: here 2~n', []),
     next_player(Player, NextPlayer),
+    format('Debug: here 3~n', []),
     update_pieces(Player, Pieces, NewPieces, setup),
-    (NewPieces = [blue-0, white-0] -> NewPhase = play ; NewPhase = setup).  % Transition to play phase if all pieces are placed
+    format('Debug: here 4~n', []),
+    (NewPieces = [Player1-0, Player2-0] -> NewPhase = play ; NewPhase = setup).  % Transition to play phase if all pieces are placed
 
 % Apply the move to the game state and return the new state
 move(state(Board, Player, Pieces, play), stack(Y1, X1, Y2, X2), state(NewBoard, NextPlayer, NewPieces, play)) :-
@@ -266,21 +300,37 @@ stack_piece(Board, X1, Y1, X2, Y2, NewBoard) :-
     format('Final updated board: ~w~n', [NewBoard]).
 
 % Switch between players
-next_player(blue, white).
+% For blue vs white
 next_player(white, blue).
+next_player(blue, white).
+
+% For blue vs computer
+next_player(whitePC, blueH).
+next_player(blueH, whitePC).
+
+% For computer vs white
+next_player(whiteH, bluePC).
+next_player(bluePC, whiteH).
+
+% For computer vs computer
+next_player(computer1, computer2).
+next_player(computer2, computer1).
 
 % Update the pieces remaining for each player during the setup phase
-update_pieces(blue, [blue-N, white-M], [blue-N1, white-M], setup) :-
+update_pieces(Player1, [Player1-N, Player2-M], [Player1-N1, Player2-M], setup) :-
     N1 is N - 1.
-update_pieces(white, [blue-N, white-M], [blue-N, white-M1], setup) :-
+update_pieces(Player2, [Player1-N, Player2-M], [Player1-N, Player2-M1], setup) :-
     M1 is M - 1.
 update_pieces(_, Pieces, Pieces, play).  % Do not decrement pieces during the play phase
 
 % Check if the game is over
-game_over(state(Board, _, _, play), Winner) :-
+game_over(state(Board, Player, Pieces, play), Winner) :-
     format('Checking game over condition...~n', []),
-    no_more_moves(state(Board, blue, _, play)),
-    no_more_moves(state(Board, white, _, play)),
+    Pieces = [Player1-_, Player2-_],
+    format('Current Player1: ~w~n', [Player1]),
+    format('Current Player2: ~w~n', [Player2]),
+    no_more_moves(state(Board, Player1, _, play)),
+    no_more_moves(state(Board, Player2, _, play)),
     tallest_stack(Board, Winner).
 
 % Check if there are no more valid moves
@@ -340,10 +390,13 @@ calculate_new_stack(Player-SourceCount, n-1, Player-NewCount) :-
     format('Adding to neutral stack. New stack: ~w~n', [Player-NewCount]).
 
 % Choose a move based on the level
-choose_move(state(_, computer, _, _), Move) :-
-    % Example for random difficulty (Level 1)
-    valid_moves(state(_, computer, _, _), Moves),
-    random_member(Move, Moves). % Pick a random move from valid ones
+choose_move(GameState, Move) :-
+    GameState = state(_, Player, _, Phase),
+    format('Debug: Choosing move for ~w~n', [Player]),
+    valid_moves(GameState, Moves),
+    format('Debug: Valid moves for computer: ~w~n', [Moves]),
+    random_member(Move, Moves),
+    format('Computer chooses move: ~w~n', [Move]).
 
 % Tests
 :- begin_tests(game_tests).
