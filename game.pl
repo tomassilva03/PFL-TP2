@@ -23,8 +23,7 @@ play :-
 seed_random :-
     statistics(runtime, [Milliseconds|_]),
     Seed is Milliseconds mod 10000,
-    setrand(Seed),
-    format('Debug: Random generator seeded with value ~w~n', [Seed]).
+    setrand(Seed).
 
 % Display the game menu
 % game.pl
@@ -77,9 +76,8 @@ configure_game(4, [board_size(5), player1(computer1), player2(computer2), option
 game_loop(GameState, Difficulty1, Difficulty2) :-
     display_game(GameState),
     ( game_over(GameState, Winner) ->
-        format('Game over! Winner: ~w~n', [Winner])
+        format('No more valid moves. Game over! Winner: ~w~n', [Winner])
     ; get_player_move(GameState, Difficulty1, Difficulty2, Move),
-    format('Debug: Player move: ~w~n', [Move]),
     move(GameState, Move, NewGameState),
     game_loop(NewGameState, Difficulty1, Difficulty2)).
 
@@ -113,5 +111,4 @@ initial_state(GameConfig, GameState) :-
     format('Game configuration:~n', []),
     format('Board size: ~w~n', [BoardSize]),
     format('Player 1: ~w (~w)~n', [Player1, Player1Name]),
-    format('Player 2: ~w (~w)~n', [Player2, Player2Name]),
-    format('Optional rules: ~w~n', [OptionalRules]).
+    format('Player 2: ~w (~w)~n', [Player2, Player2Name]).

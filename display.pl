@@ -15,24 +15,10 @@ initialize_row(BoardSize, Row) :-
 % Display the game state
 % display.pl
 display_game(state(Board, Player, Pieces, Phase)) :-
-    format('Debug: Entering display_game~n', []),
-    format('Debug: Game state: ~w~n', [state(Board, Player, Pieces, Phase)]),
-    (print_board(Board) -> 
-        format('Debug: Finished printing board~n', [])
-    ; 
-        format('Debug: Failed to print board~n', []), fail
-    ),
-    format('Debug: About to format current player~n', []),
+    print_board(Board),
     format('Current player: ~w~n', [Player]),
-    format('Debug: About to format pieces~n', []),
-    (format_pieces(Pieces) ->
-        format('Debug: Finished formatting pieces~n', [])
-    ;
-        format('Debug: Failed to format pieces~n', []), fail
-    ),
-    format('Debug: About to format phase~n', []),
-    format('Current phase: ~w~n', [Phase]),
-    format('Debug: Exiting display_game~n', []).
+    format_pieces(Pieces),
+    format('Current phase: ~w~n', [Phase]).
 
 % Print the entire board with borders
 % display.pl
@@ -69,16 +55,12 @@ write_piece(Player2-Count) :- format('~|~` t~w-~d~15+', [Player2, Count]).
 % Display Pieces in proper format
 % display.pl
 format_pieces([blue-N, white-M]) :-
-    format('Debug: In format_pieces with blue = ~w and white = ~w~n', [N, M]),
     format('blue: ~d pieces, white: ~d pieces~n', [N, M]).
 format_pieces([blueH-N, whitePC-M]) :-
-    format('Debug: In format_pieces with blue = ~w and computer = ~w~n', [N, M]),
     format('blue: ~d pieces, computer: ~d pieces~n', [N, M]).
 format_pieces([bluePC-N, whiteH-M]) :-
-    format('Debug: In format_pieces with computer = ~w and white = ~w~n', [N, M]),
     format('computer: ~d pieces, white: ~d pieces~n', [N, M]).
 format_pieces([computer1-N, computer2-M]) :-
-    format('Debug: In format_pieces with computer = ~w and computer = ~w~n', [N, M]),
     format('computer1: ~d pieces, computer2: ~d pieces~n', [N, M]).
 format_pieces(Pieces) :-
     format('Error: Invalid Pieces list: ~w~n', [Pieces]),
