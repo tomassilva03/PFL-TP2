@@ -33,7 +33,7 @@ display_menu :-
     format('Enter your choice (1-4): ', []).
 
 % Configure the game based on the selected game type
-configure_game(1, [board_size(5), player1(blue), player2(white), optional_rules([]), player1_name('Player 1'), player2_name('Player 2')]) :-
+configure_game(1, [board_size(5), player1(blue), player2(white), optional_rules([]), player1_name('Player 1'), player2_name('Player 2')], _, _) :-
     format('Starting Human vs Human game...~n', []).
 configure_game(2, [board_size(5), player1(blueH), player2(whitePC), difficulty(Difficulty), optional_rules([]), player1_name('Player 1'), player2_name('Computer')], Difficulty, _) :-
     format('Select difficulty level for Computer:~n', []),
@@ -142,8 +142,8 @@ display_game(state(Board, Player, Pieces, Phase)) :-
 
 % Print the entire board with borders
 print_board(Board) :-
-    write('  |     1     |     2     |     3     |     4     |     5     |'), nl,  % Column headers
-    write('--+-----------+-----------+-----------+-----------+-----------+'), nl,
+    write('  |       1       |       2       |       3       |       4       |       5       |'), nl,  % Column headers
+    write('--+---------------+---------------+---------------+---------------+---------------+'), nl,
     print_board_rows(Board, 1).  % Start printing rows with indices
 
 % Print each row with borders and row indices
@@ -151,7 +151,7 @@ print_board_rows([], _).
 print_board_rows([Row|Rest], RowIndex) :-
     format('~d |', [RowIndex]),  % Row index
     print_row(Row), nl,
-    write('--+-----------+-----------+-----------+-----------+-----------+'), nl,  % Row border
+    write('--+---------------+---------------+---------------+---------------+---------------+'), nl,  % Row border
     NextRowIndex is RowIndex + 1,
     print_board_rows(Rest, NextRowIndex).
 
@@ -163,10 +163,10 @@ print_row([Cell|Rest]) :-
     print_row(Rest).
 
 % Write a piece or stack with fixed width for all cells
-write_piece(n-1) :- write(' neutral-1 '). 
-write_piece(e-0) :- write('  empty-0  '). 
-write_piece(Player1-Count) :- format('   ~w-~d  ', [Player1, Count]).
-write_piece(Player2-Count) :- format('  ~w-~d  ', [Player2, Count]).
+write_piece(n-1) :- format('~|~` t~w~15+', ['neutral-1']).
+write_piece(e-0) :- format('~|~` t~w~15+', ['empty-0']).
+write_piece(Player1-Count) :- format('~|~` t~w-~d~15+', [Player1, Count]).
+write_piece(Player2-Count) :- format('~|~` t~w-~d~15+', [Player2, Count]).
 
 % Display Pieces in proper format
 format_pieces([blue-N, white-M]) :-
