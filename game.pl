@@ -9,7 +9,6 @@
 :- use_module(library(random)).
 
 % Display the game menu and start the game
-% game.pl
 play :-
     seed_random,
     display_menu,
@@ -19,14 +18,12 @@ play :-
     game_loop(GameState, Difficulty1, Difficulty2).
 
 % Seed the random number generator
-% game.pl
 seed_random :-
     statistics(runtime, [Milliseconds|_]),
     Seed is Milliseconds mod 10000,
     setrand(Seed).
 
 % Display the game menu
-% game.pl
 display_menu :-
     format('Welcome to the Game of STAQS!~n', []),
     format('Select game type:~n', []),
@@ -37,7 +34,6 @@ display_menu :-
     format('Enter your choice (1-4): ', []).
 
 % Configure the game based on the selected game type
-% game.pl
 configure_game(1, [board_size(5), player1(blue), player2(white), optional_rules([]), player1_name('Player 1'), player2_name('Player 2')], _, _) :-
     format('Starting Human vs Human game...~n', []).
 configure_game(2, [board_size(5), player1(blueH), player2(whitePC), difficulty(Difficulty), optional_rules([]), player1_name('Player 1'), player2_name('Computer')], Difficulty, _) :-
@@ -72,7 +68,6 @@ configure_game(4, [board_size(5), player1(computer1), player2(computer2), option
     format('Starting Computer vs Computer game with difficulty levels ~w and ~w...~n', [Difficulty1, Difficulty2]).
 
 % Main game loop
-% game.pl
 game_loop(GameState, Difficulty1, Difficulty2) :-
     display_game(GameState),
     ( game_over(GameState, Winner) ->
@@ -83,7 +78,6 @@ game_loop(GameState, Difficulty1, Difficulty2) :-
 
 % initial_state(+GameConfig, -GameState)
 % Sets up the initial game state based on the provided configuration.
-% game.pl
 initial_state(GameConfig, GameState) :-
     GameState = state(Board, CurrentPlayer, Pieces, Phase),
     % Extract configuration parameters
@@ -112,3 +106,5 @@ initial_state(GameConfig, GameState) :-
     format('Board size: ~w~n', [BoardSize]),
     format('Player 1: ~w (~w)~n', [Player1, Player1Name]),
     format('Player 2: ~w (~w)~n', [Player2, Player2Name]).
+
+:- play.  % Start the game
