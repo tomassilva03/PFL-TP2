@@ -10,8 +10,10 @@ initialize_row(BoardSize, Row) :-
     length(Row, BoardSize),
     maplist(=(n-1), Row).
 
+% display_game(+GameState)
 % Display the game state
-display_game(state(Board, Player, Pieces, Phase)) :-
+display_game(GameState) :-
+    GameState = state(Board, Player, Pieces, Phase),
     print_board(Board),
     format('Current player: ~w~n', [Player]),
     format_pieces(Pieces),

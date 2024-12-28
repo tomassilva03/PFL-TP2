@@ -1,5 +1,6 @@
 % ai.pl - Contains the AI logic for choosing moves
 
+% choose_move(+GameState, +Difficulty, -Move).
 % Choose a move based on the level
 choose_move(GameState, Difficulty, Move) :-
     GameState = state(_, Player, _, Phase),
@@ -18,16 +19,9 @@ choose_move(GameState, Difficulty, Move) :-
     ),
     format('Computer chooses move: ~w~n', [Move]).
 
-% Calculate the value of a game state by finding the tallest stack created by the player
-value(state(Board, Player, _, _), Player, Value) :-
-    findall(Count, (
-        member(Row, Board),
-        member(Player-Count, Row)
-    ), Counts),
-    max_member(Value, Counts).
-
 % Calculate the value of a move by simulating the move and evaluating the resulting game state
-move_value(GameState, stack(Y1, X1, Y2, X2), Value) :-
+value(GameState, Move, Value) :-
+    Move = stack(Y1, X1, Y2, X2),
     move(GameState, stack(Y1, X1, Y2, X2), state(NewBoard, _, _, _)),
     nth1(Y2, NewBoard, Row),
     nth1(X2, Row, Player-NewCount),
@@ -37,7 +31,7 @@ move_value(GameState, stack(Y1, X1, Y2, X2), Value) :-
 choose_greedy_move(GameState, Moves, BestMove) :-
     findall(Value-Move, (
         member(Move, Moves),
-        move_value(GameState, Move, Value)
+        value(GameState, Move, Value)
     ), MoveValues),
     max_member(_-BestMove, MoveValues).
 
