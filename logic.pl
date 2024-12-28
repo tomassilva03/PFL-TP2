@@ -27,14 +27,18 @@ get_player_move(GameState, Difficulty1, Difficulty2, Move) :-
     )).
 
 % Check if the move is valid in the setup phase
-valid_move(state(Board, Player, Pieces, setup), place(Y, X)) :-
+valid_move(GameState, Move) :-
+    GameState = state(Board, Player, Pieces, setup),
+    Move = place(Y, X),
     X > 0, X =< 5,  % Check if X is within board boundaries
     Y > 0, Y =< 5,  % Check if Y is within board boundaries
     nth1(Y, Board, Row), nth1(X, Row, Cell),
     Cell = n-1.  % The cell is neutral with a stack size of 1
 
 % Check if the move is valid in the play phase
-valid_move(state(Board, Player, _, play), stack(Y1, X1, Y2, X2)) :-
+valid_move(GameState, Move) :-
+    GameState = state(Board, Player, _, play),
+    Move = stack(Y1, X1, Y2, X2),
     % Ensure coordinates are valid
     X1 > 0, X1 =< 5, Y1 > 0, Y1 =< 5,
     X2 > 0, X2 =< 5, Y2 > 0, Y2 =< 5,
@@ -166,17 +170,20 @@ valid_moves(GameState, Moves) :-
         valid_move(state(Board, Player, Pieces, play), stack(Y1, X1, Y2, X2))
     ), Moves).
 
-% Determine the player with the tallest stack
 tallest_stack(Board, Winner) :-
     findall(Count-Player, (member(Row, Board), member(Player-Count, Row), Player \= n), CountsPlayers),
     sort(CountsPlayers, SortedCountsPlayers),
     reverse(SortedCountsPlayers, DescendingCountsPlayers),
-    DescendingCountsPlayers = [MaxCount-Player1, SecondMaxCount-Player2, ThirdMaxCount-Player3 | _],
-    (MaxCount =:= SecondMaxCount ->
-        Winner = Player3
+    determine_winner(DescendingCountsPlayers, Winner).
+
+determine_winner([Count1-Player1, Count2-Player2 | Rest], Winner) :-
+    ( Count1 =:= Count2 ->
+        determine_winner(Rest, Winner)
     ;
         Winner = Player1
     ).
+determine_winner([Count-Player | _], Player).
+determine_winner([], no_winner). % In case there are no valid stacks
 
 % Correctly replace an element in a list
 replace_element([_|T], 1, Elem, [Elem|T]).

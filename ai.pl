@@ -36,7 +36,8 @@ choose_greedy_move(GameState, Moves, BestMove) :-
     max_member(_-BestMove, MoveValues).
 
 % Evaluate the game state by finding the tallest stack created by the player
-evaluate(state(Board, Player, _, _), Score) :-
+evaluate(GameState, Score) :-
+    GameState = state(Board, Player, _, _),
     findall(Count, (
         member(Row, Board),
         member(Player-Count, Row)

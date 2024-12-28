@@ -71,10 +71,15 @@ configure_game(4, [board_size(5), player1(computer1), player2(computer2), option
 game_loop(GameState, Difficulty1, Difficulty2) :-
     display_game(GameState),
     ( game_over(GameState, Winner) ->
-        format('No more valid moves. Game over! Winner: ~w~n', [Winner])
+        ( Winner = e ->
+            format('No more valid moves. The game is a tie!~n', [])
+        ;
+            format('No more valid moves. Game over! Winner: ~w~n', [Winner])
+        )
     ; get_player_move(GameState, Difficulty1, Difficulty2, Move),
-    move(GameState, Move, NewGameState),
-    game_loop(NewGameState, Difficulty1, Difficulty2)).
+      move(GameState, Move, NewGameState),
+      game_loop(NewGameState, Difficulty1, Difficulty2)
+    ).
 
 % initial_state(+GameConfig, -GameState)
 % Sets up the initial game state based on the provided configuration.
@@ -106,5 +111,3 @@ initial_state(GameConfig, GameState) :-
     format('Board size: ~w~n', [BoardSize]),
     format('Player 1: ~w (~w)~n', [Player1, Player1Name]),
     format('Player 2: ~w (~w)~n', [Player2, Player2Name]).
-
-:- play.  % Start the game
