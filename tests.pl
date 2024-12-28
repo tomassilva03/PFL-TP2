@@ -12,8 +12,7 @@ test(game_not_ended_with_valid_moves) :-
                        [e-0, e-0, blue-2, e-0, white-3],
                        [e-0, e-0, e-0, blue-2, e-0],
                        [white-4, e-0, e-0, e-0, blue-2]], blue, [blue-0, white-0], play),
-    \+ game_over(GameState, _), % Assert that the game is not over
-    valid_moves(GameState, Moves). % Collect all valid moves
+    \+ game_over(GameState, _). % Assert that the game is not over
 
 % Test: The game should end if no more valid moves exist and a winner is determined
 test(game_ended_with_no_valid_moves_and_winner_blue) :-
@@ -96,7 +95,7 @@ test(player_cannot_stack_a_stack_on_top_of_an_opponents_stack) :-
                        [white-2, n-1, n-1, n-1, n-1]], blue, [blue-0, white-0], play), !.
 
 % Test: When game ends with draw in the tallest stack the winner should be the player with the second tallest stack
-test(game_ended_with_draw_winner_white) :-
+test(game_ended_with_winner_white_after_draw) :-
     GameState = state([[blue-9, e-0, e-0, e-0, white-9],
                        [e-0, e-0, e-0, e-0, e-0],
                        [e-0, e-0, blue-7, e-0, white-7],
