@@ -1,5 +1,7 @@
 % tests.pl - Contains the game tests
 
+:- use_module(library(plunit)). % Load the test framework
+
 % Tests
 :- begin_tests(game_tests).
 
@@ -103,10 +105,10 @@ test(player_cannot_stack_a_stack_on_top_of_an_opponents_stack) :-
 % Test: When game ends with draw in the tallest stack the winner should be the player with the second tallest stack
 test(game_ended_with_draw_winner_white) :-
     GameState = state([[blue-9, e-0, e-0, e-0, white-9],
-                       [blue-2, e-0, e-0, e-0, e-0],
+                       [e-0, e-0, e-0, e-0, e-0],
                        [e-0, e-0, blue-2, e-0, white-7],
                        [e-0, e-0, e-0, blue-2, e-0],
-                       [white-2, white-2, e-0, e-0, e-0]], blue, [blue-0, white-0], play),
+                       [white-2,e-0, e-0, e-0, e-0]], blue, [blue-0, white-0], play),
     game_over(GameState, Winner), % Assert that the game is over
     Winner = white, % Assert that the winner is blue
     format('Game over! Winner: ~w~n', [Winner]). % Debugging output
