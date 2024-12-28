@@ -405,7 +405,7 @@ choose_move(GameState, Difficulty, Move) :-
         ; Difficulty = 2 ->
             choose_greedy_move(GameState, Moves, Move)  % Greedy move for level 2
         ; Difficulty = 3 ->
-            minimax(GameState, 3, true, Move, _)  % Minimax move for level 3
+            minimax(GameState, 4, Move, _)  % Minimax move for level 3
         )
     ),
     format('Computer chooses move: ~w~n', [Move]).
@@ -444,9 +444,9 @@ evaluate(state(Board, Player, _, _), Score) :-
     ), Counts),
     max_member(Score, Counts).
 
-% Minimax algorithm with depth limit
-minimax(GameState, Depth, MaxPlayer, BestMove, BestValue) :-
-    format('Debug: Entering minimax with Depth ~w and MaxPlayer ~w~n', [Depth, MaxPlayer]),
+% Minimax algorithm with depth limit, focusing only on maximizing the value
+minimax(GameState, Depth, BestMove, BestValue) :-
+    format('Debug: Entering minimax with Depth ~w~n', [Depth]),
     Depth > 0,
     valid_moves(GameState, Moves),
     Moves \= [],
@@ -456,24 +456,19 @@ minimax(GameState, Depth, MaxPlayer, BestMove, BestValue) :-
         member(Move, Moves),
         format('Debug: Simulating move: ~w~n', [Move]),
         move(GameState, Move, NewGameState),
-        minimax_value(NewGameState, NewDepth, MaxPlayer, Value),
+        minimax_value(NewGameState, NewDepth, Value),
         format('Debug: Move ~w has value ~w~n', [Move, Value])
     ), MoveValues),
     format('Debug: Move values: ~w~n', [MoveValues]),
-    (MaxPlayer = true ->
-        max_member(BestValue-BestMove, MoveValues),
-        format('Debug: MaxPlayer choosing move: ~w with value: ~w~n', [BestMove, BestValue])
-    ;
-        min_member(BestValue-BestMove, MoveValues),
-        format('Debug: MinPlayer choosing move: ~w with value: ~w~n', [BestMove, BestValue])
-    ).
+    max_member(BestValue-BestMove, MoveValues),
+    format('Debug: Choosing move: ~w with value: ~w~n', [BestMove, BestValue]).
 
 % Base case: evaluate the game state when depth is 0 or no moves are available
-minimax(GameState, 0, _, _, Value) :-
+minimax(GameState, 0, _, Value) :-
     format('Debug: Base case reached with Depth 0~n', []),
     evaluate(GameState, Value),
     format('Debug: Evaluated value: ~w~n', [Value]).
-minimax(GameState, _, _, _, Value) :-
+minimax(GameState, _, _, Value) :-
     format('Debug: Base case reached with no valid moves~n', []),
     valid_moves(GameState, Moves),
     Moves = [],
@@ -481,15 +476,8 @@ minimax(GameState, _, _, _, Value) :-
     format('Debug: Evaluated value: ~w~n', [Value]).
 
 % Determine the value for the minimax algorithm
-minimax_value(GameState, Depth, MaxPlayer, Value) :-
-    format('Debug: Entering minimax_value with Depth ~w and MaxPlayer ~w~n', [Depth, MaxPlayer]),
-    (MaxPlayer = true ->
-        minimax(GameState, Depth, false, _, Value),
-        format('Debug: MaxPlayer value: ~w~n', [Value])
-    ;
-        minimax(GameState, Depth, true, _, Value),
-        format('Debug: MinPlayer value: ~w~n', [Value])
-    ).
+minimax_value(GameState, Depth, Value) :-
+    minimax(GameState, Depth, _, Value).
 
 
 
