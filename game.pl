@@ -84,7 +84,7 @@ game_loop(GameState, Difficulty1, Difficulty2) :-
 % initial_state(+GameConfig, -GameState)
 % Sets up the initial game state based on the provided configuration.
 initial_state(GameConfig, GameState) :-
-    GameState = state(Board, CurrentPlayer, Pieces, Phase),
+    GameState = state(Board, CurrentPlayer, Pieces, Phase, BoardSize),
     % Extract configuration parameters
     ( member(board_size(BoardSize), GameConfig) -> true ; BoardSize = 5 ),
     ( member(player1(Player1), GameConfig) -> true ; Player1 = blue ),

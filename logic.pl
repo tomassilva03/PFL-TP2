@@ -2,7 +2,7 @@
 
 % Get the player's move
 get_player_move(GameState, Difficulty1, Difficulty2, Move) :-
-    GameState = state(_, Player, _, Phase),
+    GameState = state(_, Player, _, Phase, BoardSize),
     valid_moves(GameState, Moves),
     (Moves = [] ->
         % No moves available, skip the turn
@@ -28,20 +28,20 @@ get_player_move(GameState, Difficulty1, Difficulty2, Move) :-
 
 % Check if the move is valid in the setup phase
 valid_move(GameState, Move) :-
-    GameState = state(Board, Player, Pieces, setup),
+    GameState = state(Board, Player, Pieces, setup, BoardSize),
     Move = place(Y, X),
-    X > 0, X =< 5,  % Check if X is within board boundaries
-    Y > 0, Y =< 5,  % Check if Y is within board boundaries
+    X > 0, X =< BoardSize,  % Check if X is within board boundaries
+    Y > 0, Y =< BoardSize,  % Check if Y is within board boundaries
     nth1(Y, Board, Row), nth1(X, Row, Cell),
     Cell = n-1.  % The cell is neutral with a stack size of 1
 
 % Check if the move is valid in the play phase
 valid_move(GameState, Move) :-
-    GameState = state(Board, Player, _, play),
+    GameState = state(Board, Player, _, play, BoardSize),
     Move = stack(Y1, X1, Y2, X2),
     % Ensure coordinates are valid
-    X1 > 0, X1 =< 5, Y1 > 0, Y1 =< 5,
-    X2 > 0, X2 =< 5, Y2 > 0, Y2 =< 5,
+    X1 > 0, X1 =< BoardSize, Y1 > 0, Y1 =< BoardSize,
+    X2 > 0, X2 =< BoardSize, Y2 > 0, Y2 =< BoardSize,
     (X1 =:= X2 ; Y1 =:= Y2), % Must move orthogonally
     abs(X1 - X2) + abs(Y1 - Y2) =:= 1, % Ensure the move is exactly one cell
     nth1(Y1, Board, Row1), nth1(X1, Row1, SourceStack),
@@ -50,22 +50,22 @@ valid_move(GameState, Move) :-
     (DestCell = n-1 ; DestCell = Player-_). % Destination must be neutral or belong to the player
 
 % Check if the move is valid
-valid_move(state(_, _, _, play), skip).
+valid_move(state(_, _, _, play, _), skip).
 
 % move(+GameState, +Move, -NewGameState)
 % Apply the move to the game state and return the new state
 move(GameState, Move, NewGameState) :-
-    GameState = state(Board, Player, Pieces, play),
+    GameState = state(Board, Player, Pieces, play, BoardSize),
     Move = skip,
-    NewGameState = state(Board, NextPlayer, Pieces, play),
+    NewGameState = state(Board, NextPlayer, Pieces, play, BoardSize),
     next_player(Player, NextPlayer).
 
 % move(+GameState, +Move, -NewGameState)
 % Apply the move to the game state and return the new state
 move(GameState, Move, NewGameState) :-
-    GameState = state(Board, Player, Pieces, setup),
+    GameState = state(Board, Player, Pieces, setup, BoardSize),
     Move = place(Y, X),
-    NewGameState = state(NewBoard, NextPlayer, NewPieces, NewPhase),
+    NewGameState = state(NewBoard, NextPlayer, NewPieces, NewPhase, BoardSize),
     place_piece(Board, X, Y, Player, NewBoard),
     next_player(Player, NextPlayer),
     update_pieces(Player, Pieces, NewPieces, setup),
@@ -74,9 +74,9 @@ move(GameState, Move, NewGameState) :-
 % move(+GameState, +Move, -NewGameState)
 % Apply the move to the game state and return the new state
 move(GameState, Move, NewGameState) :-
-    GameState = state(Board, Player, Pieces, play),
+    GameState = state(Board, Player, Pieces, play, BoardSize),
     Move = stack(Y1, X1, Y2, X2),
-    NewGameState = state(NewBoard, NextPlayer, NewPieces, play),
+    NewGameState = state(NewBoard, NextPlayer, NewPieces, play, BoardSize),
     stack_piece(Board, X1, Y1, X2, Y2, NewBoard),
     next_player(Player, NextPlayer),
     update_pieces(Player, Pieces, NewPieces, play).  % Do not decrement pieces during the play phase
@@ -139,35 +139,35 @@ update_pieces(_, Pieces, Pieces, play).  % Do not decrement pieces during the pl
 % game_over(+GameState, -Winner)
 % Check if the game is over
 game_over(GameState, Winner) :-
-    GameState = state(Board, Player, Pieces, play),
+    GameState = state(Board, Player, Pieces, play, BoardSize),
     Pieces = [Player1-_, Player2-_],
-    no_more_moves(state(Board, Player1, _, play)),
-    no_more_moves(state(Board, Player2, _, play)),
+    no_more_moves(state(Board, Player1, _, play, BoardSize)),
+    no_more_moves(state(Board, Player2, _, play, BoardSize)),
     tallest_stack(Board, Winner).
 
 % Check if there are no more valid moves
-no_more_moves(state(Board, Player, Pieces, Phase)) :-
+no_more_moves(state(Board, Player, Pieces, Phase, BoardSize)) :-
     Phase = play,  % Ensure this is only checked during the play phase
-    valid_moves(state(Board, Player, Pieces, Phase), Moves),
+    valid_moves(state(Board, Player, Pieces, Phase, BoardSize), Moves),
     Moves = [].
 
 % valid_moves(+GameState, -Moves)
 % Find all valid moves for a player in the setup phase
 valid_moves(GameState, Moves) :-
-    GameState = state(Board, Player, Pieces, setup),
+    GameState = state(Board, Player, Pieces, setup, BoardSize),
     findall(place(Y, X), (
-        between(1, 5, Y), between(1, 5, X), % Iterate over all positions
-        valid_move(state(Board, Player, Pieces, setup), place(Y, X))
+        between(1, BoardSize, Y), between(1, BoardSize, X), % Iterate over all positions
+        valid_move(state(Board, Player, Pieces, setup, BoardSize), place(Y, X))
     ), Moves).
 
 % valid_moves(+GameState, -Moves)
 % Find all valid moves for a player in the play phase
 valid_moves(GameState, Moves) :-
-    GameState = state(Board, Player, Pieces, play),
+    GameState = state(Board, Player, Pieces, play, BoardSize),
     findall(stack(Y1, X1, Y2, X2), (
-        between(1, 5, Y1), between(1, 5, X1), % Iterate over source positions
-        between(1, 5, Y2), between(1, 5, X2), % Iterate over destination positions
-        valid_move(state(Board, Player, Pieces, play), stack(Y1, X1, Y2, X2))
+        between(1, BoardSize, Y1), between(1, BoardSize, X1), % Iterate over source positions
+        between(1, BoardSize, Y2), between(1, BoardSize, X2), % Iterate over destination positions
+        valid_move(state(Board, Player, Pieces, play, BoardSize), stack(Y1, X1, Y2, X2))
     ), Moves).
 
 tallest_stack(Board, Winner) :-
