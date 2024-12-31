@@ -145,29 +145,14 @@ game_over(GameState, Winner) :-
     no_more_moves(state(Board, Player2, _, play, BoardSize)),
     tallest_stack(Board, Winner, TallestStack).
 
-% Find the tallest stack and the winner
-tallest_stack(Board, Winner) :-
-    findall(Count-Player, (member(Row, Board), member(Player-Count, Row), Player \= n), CountsPlayers),
-    sort(CountsPlayers, SortedCountsPlayers),
-    reverse(SortedCountsPlayers, DescendingCountsPlayers),
-    determine_winner(DescendingCountsPlayers, Winner).
-
-determine_winner([Count1-Player1, Count2-Player2 | Rest], Winner) :-
-    ( Count1 =:= Count2 ->
-        determine_winner(Rest, Winner)
-    ;
-        Winner = Player1
-    ).
-determine_winner([Count-Player | _], Player).
-determine_winner([], no_winner). % In case there are no valid stacks
-
-% Find the tallest stack the winner and the stack size
+% Find the tallest stack, the winner, and the stack size
 tallest_stack(Board, Winner, TallestStack) :-
     findall(Count-Player, (member(Row, Board), member(Player-Count, Row), Player \= n), CountsPlayers),
     sort(CountsPlayers, SortedCountsPlayers),
     reverse(SortedCountsPlayers, DescendingCountsPlayers),
     determine_winner(DescendingCountsPlayers, Winner, TallestStack).
 
+% Determine the winner and the tallest stack size
 determine_winner([Count1-Player1, Count2-Player2 | Rest], Winner, TallestStack) :-
     ( Count1 =:= Count2 ->
         determine_winner(Rest, Winner, TallestStack)

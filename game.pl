@@ -77,10 +77,11 @@ configure_game(4, [board_size(BoardSize), player1(computer1), player2(computer2)
 
 % Ask the user for the board size
 ask_board_size(BoardSize) :-
-    format('Enter the board size (e.g., 5 for a 5x5 board): ', []),
+    format('Enter the board size from 4 to 10 (e.g., 5 for a 5x5 board): ', []),
     read(BoardSize),
     integer(BoardSize),
-    BoardSize > 0.
+    BoardSize >= 4,
+    BoardSize =< 10.
 
 % initial_state(+GameConfig, -GameState)
 % Sets up the initial game state based on the provided configuration.
@@ -101,8 +102,13 @@ initial_state(GameConfig, GameState) :-
     % Set the initial player
     CurrentPlayer = Player1,
     
-    % Set the initial pieces for each player
-    Pieces = [Player1-4, Player2-4], % Ensure this format is used regardless of Player2 being a computer or human
+    % Set the initial pieces for each player based on the board size
+    ( BoardSize >= 7 ->
+        InitialPieces = 6  % More pieces for larger boards
+    ; 
+        InitialPieces = 4  % Default number of pieces
+    ),
+    Pieces = [Player1-InitialPieces, Player2-InitialPieces],
     
     % Set the initial phase
     Phase = setup,
