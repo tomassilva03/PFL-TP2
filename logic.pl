@@ -137,13 +137,46 @@ update_pieces(Player2, [Player1-N, Player2-M], [Player1-N, Player2-M1], setup) :
 update_pieces(_, Pieces, Pieces, play).  % Do not decrement pieces during the play phase
 
 % game_over(+GameState, -Winner)
-% Check if the game is over
+% Check if the game is over and return the winner
 game_over(GameState, Winner) :-
     GameState = state(Board, Player, Pieces, play, BoardSize),
     Pieces = [Player1-_, Player2-_],
     no_more_moves(state(Board, Player1, _, play, BoardSize)),
     no_more_moves(state(Board, Player2, _, play, BoardSize)),
-    tallest_stack(Board, Winner).
+    tallest_stack(Board, Winner, TallestStack).
+
+% Find the tallest stack and the winner
+tallest_stack(Board, Winner) :-
+    findall(Count-Player, (member(Row, Board), member(Player-Count, Row), Player \= n), CountsPlayers),
+    sort(CountsPlayers, SortedCountsPlayers),
+    reverse(SortedCountsPlayers, DescendingCountsPlayers),
+    determine_winner(DescendingCountsPlayers, Winner).
+
+determine_winner([Count1-Player1, Count2-Player2 | Rest], Winner) :-
+    ( Count1 =:= Count2 ->
+        determine_winner(Rest, Winner)
+    ;
+        Winner = Player1
+    ).
+determine_winner([Count-Player | _], Player).
+determine_winner([], no_winner). % In case there are no valid stacks
+
+% Find the tallest stack the winner and the stack size
+tallest_stack(Board, Winner, TallestStack) :-
+    findall(Count-Player, (member(Row, Board), member(Player-Count, Row), Player \= n), CountsPlayers),
+    sort(CountsPlayers, SortedCountsPlayers),
+    reverse(SortedCountsPlayers, DescendingCountsPlayers),
+    determine_winner(DescendingCountsPlayers, Winner, TallestStack).
+
+determine_winner([Count1-Player1, Count2-Player2 | Rest], Winner, TallestStack) :-
+    ( Count1 =:= Count2 ->
+        determine_winner(Rest, Winner, TallestStack)
+    ;
+        Winner = Player1,
+        TallestStack = Count1
+    ).
+determine_winner([Count-Player | _], Player, Count).
+determine_winner([], no_winner, 0). % In case there are no valid stacks
 
 % Check if there are no more valid moves
 no_more_moves(state(Board, Player, Pieces, Phase, BoardSize)) :-
@@ -169,21 +202,6 @@ valid_moves(GameState, Moves) :-
         between(1, BoardSize, Y2), between(1, BoardSize, X2), % Iterate over destination positions
         valid_move(state(Board, Player, Pieces, play, BoardSize), stack(Y1, X1, Y2, X2))
     ), Moves).
-
-tallest_stack(Board, Winner) :-
-    findall(Count-Player, (member(Row, Board), member(Player-Count, Row), Player \= n), CountsPlayers),
-    sort(CountsPlayers, SortedCountsPlayers),
-    reverse(SortedCountsPlayers, DescendingCountsPlayers),
-    determine_winner(DescendingCountsPlayers, Winner).
-
-determine_winner([Count1-Player1, Count2-Player2 | Rest], Winner) :-
-    ( Count1 =:= Count2 ->
-        determine_winner(Rest, Winner)
-    ;
-        Winner = Player1
-    ).
-determine_winner([Count-Player | _], Player).
-determine_winner([], no_winner). % In case there are no valid stacks
 
 % Correctly replace an element in a list
 replace_element([_|T], 1, Elem, [Elem|T]).
