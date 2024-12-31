@@ -3,7 +3,7 @@
 % choose_move(+GameState, +Difficulty, -Move).
 % Choose a move based on the level
 choose_move(GameState, Difficulty, Move) :-
-    GameState = state(_, Player, _, Phase),
+    GameState = state(_, Player, _, Phase, BoardSize),
     valid_moves(GameState, Moves),
     (Phase = setup ->
         random_member(Move, Moves)  % Random move for setup phase
@@ -22,7 +22,7 @@ choose_move(GameState, Difficulty, Move) :-
 % Calculate the value of a move by simulating the move and evaluating the resulting game state
 value(GameState, Move, Value) :-
     Move = stack(Y1, X1, Y2, X2),
-    move(GameState, stack(Y1, X1, Y2, X2), state(NewBoard, _, _, _)),
+    move(GameState, stack(Y1, X1, Y2, X2), state(NewBoard, _, _, _, BoardSize)),
     nth1(Y2, NewBoard, Row),
     nth1(X2, Row, Player-NewCount),
     Value is NewCount.
@@ -37,7 +37,7 @@ choose_greedy_move(GameState, Moves, BestMove) :-
 
 % Evaluate the game state by finding the tallest stack created by the player
 evaluate(GameState, Score) :-
-    GameState = state(Board, Player, _, _),
+    GameState = state(Board, Player, _, _, BoardSize),
     findall(Count, (
         member(Row, Board),
         member(Player-Count, Row)
