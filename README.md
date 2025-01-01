@@ -133,6 +133,8 @@ The game menu system allows players to select the game type, board size, and dif
 ### Limitations
 One of the main limitations of the current implementation is the lack of strategic depth during the setup phase. In this phase, players place their pieces on the board, but there isn't much room for strategic decision-making. As a result, the AI uses only the random move selection algorithm during the setup phase, regardless of the chosen difficulty level. This simplifies the setup phase but may not provide the most engaging experience for players looking for a more challenging AI opponent from the start.
 
+Another limitation is the inability to perform input validation for some inputs. While we have implemented validation for player moves during the game, other inputs such as game type, board size, and difficulty level are not fully validated, which may lead to unexpected behavior or errors.
+
 ### Possible Improvements
 1. **Enhanced AI for Setup Phase:**
    - Develop more sophisticated algorithms for the setup phase to introduce strategic depth and make the game more challenging from the beginning.
@@ -158,7 +160,7 @@ One of the main limitations of the current implementation is the lack of strateg
 
 
 ### Conclusions about the Work Carried Out
-The development of the STAQS game in Prolog has been a valuable learning experience, providing insights into game design, AI algorithms, and user interaction. The project successfully implemented a functional game with variable-sized boards and different difficulty levels. However, there are areas for improvement, particularly in enhancing the AI's strategic capabilities during the setup phase and optimizing performance for larger boards. Overall, the project demonstrates the potential of Prolog for developing complex logic-based games and sets the foundation for future enhancements and extensions.
+The development of the STAQS game in Prolog has been a valuable learning experience, providing insights into game design, AI algorithms, and user interaction. The project successfully implemented a functional game with variable-sized boards and different difficulty levels. However, there are areas for improvement, particularly in enhancing the AI's strategic capabilities during the setup phase and optimizing performance for larger boards. Additionally, improving input validation for all user inputs is necessary to ensure a robust and error-free gaming experience. Overall, the project demonstrates the potential of Prolog for developing complex logic-based games and sets the foundation for future enhancements and extensions.
 
 ## Images
 
