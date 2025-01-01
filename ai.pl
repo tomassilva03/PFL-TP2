@@ -35,15 +35,6 @@ choose_greedy_move(GameState, Moves, BestMove) :-
     ), MoveValues),
     max_member(_-BestMove, MoveValues).
 
-% Evaluate the game state by finding the tallest stack created by the player
-evaluate(GameState, Score) :-
-    GameState = state(Board, Player, _, _, BoardSize),
-    findall(Count, (
-        member(Row, Board),
-        member(Player-Count, Row)
-    ), Counts),
-    max_member(Score, Counts).
-
 % Minimax algorithm with depth limit, focusing only on maximizing the value
 minimax(GameState, Depth, BestMove, BestValue) :-
     Depth > 0,
@@ -69,4 +60,13 @@ minimax(GameState, _, _, Value) :-
 % Determine the value for the minimax algorithm
 minimax_value(GameState, Depth, Value) :-
     minimax(GameState, Depth, _, Value).
+
+% Evaluate the game state by finding the tallest stack created by the player
+evaluate(GameState, Score) :-
+    GameState = state(Board, Player, _, _, BoardSize),
+    findall(Count, (
+        member(Row, Board),
+        member(Player-Count, Row)
+    ), Counts),
+    max_member(Score, Counts).
 
