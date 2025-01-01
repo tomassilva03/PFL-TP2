@@ -18,7 +18,9 @@ get_player_move(GameState, Difficulty1, Difficulty2, Move) :-
         choose_move(GameState, Difficulty2, Move)
     ; % Otherwise, prompt the human player for input
         format('Enter your move, X = row, Y = column (e.g., place(X,Y) or stack(X,Y,A,B)): ~n', []),
+        prompt(_, 'Move: '),  % Set custom prompt
         read(InputMove),
+        prompt(_, '|: '),  % Reset the prompt to the default
         (valid_move(GameState, InputMove) ->
             Move = InputMove
         ; format('Invalid move! Try again.~n', []),
