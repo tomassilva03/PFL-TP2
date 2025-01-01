@@ -24,18 +24,18 @@
 ### Instalation
 
 1. **Clone the Git Repository:**
-```
+```sh
 git clone https://github.com/tomassilva03/PFL-TP2 
 ```
 ### Execution
 
 1. **Launch SICStus and consult game.pl:**
-```
-['path/to/file/game.pl'].
+```prolog
+['/path/to/file/game.pl'].
 ```
 
 2. **Initiate the Game:**
-```
+```prolog
 play.
 ```
 
@@ -155,6 +155,58 @@ Another limitation is the inability to perform input validation for some inputs.
 
 ### Conclusions about the Work Carried Out
 The development of the STAQS game in Prolog has been a valuable learning experience, providing insights into game design, AI algorithms, and user interaction. The project successfully implemented a functional game with variable-sized boards and different difficulty levels. However, there are areas for improvement, particularly in enhancing the AI's strategic capabilities during the setup phase and optimizing performance for larger boards. Additionally, improving input validation for all user inputs is necessary to ensure a robust and error-free gaming experience. Overall, the project demonstrates the potential of Prolog for developing complex logic-based games and sets the foundation for future enhancements and extensions.
+
+## Tests
+
+### Overview
+The STAQS game includes a comprehensive suite of tests to ensure the correctness and robustness of the game logic. The tests are implemented using the Prolog `plunit` library and cover various aspects of the game, including game state transitions, move validation, and AI behavior.
+
+### Running the Tests
+To run the tests, follow these steps:
+
+1. **Launch SICStus Prolog and consult the `game.pl` file:**
+    ```prolog
+    ['/path/to/file/game.pl'].
+    ```
+
+2. **Run the tests:**
+    ```prolog
+    run_tests.
+    ```
+
+### Test Cases
+The test suite includes the following test cases:
+
+1. **Game State Tests:**
+    - `game_not_ended_with_valid_moves`: Ensures the game does not end if valid moves exist.
+    - `game_ended_with_no_valid_moves_and_winner_blue`: Ensures the game ends correctly and determines the winner when no valid moves exist.
+    - `game_ended_with_winner_white_after_draw`: Ensures the correct winner is determined in case of a draw in the tallest stack.
+    - `game_ended_with_draw`: Ensures the game ends in a draw when no valid moves exist and no player has a taller stack.
+
+2. **Move Validation Tests:**
+    - `player_can_skip_turn`: Ensures a player can skip their turn if no valid moves are available.
+    - `player_can_place_piece_on_board`: Ensures a player can place a piece on the board during the setup phase.
+    - `player_can_stack_a_stack_on_top_of_another_stack`: Ensures a player can stack a piece on top of another stack.
+    - `player_can_stack_a_stack_on_top_of_a_neutral_cell`: Ensures a player can stack a piece on top of a neutral cell.
+    - `player_cannot_stack_a_stack_on_top_of_an_opponents_stack`: Ensures a player cannot stack a piece on top of an opponent's stack.
+    - `invalid_move_setup_outside_boundaries`: Ensures an invalid move is detected when placing a piece outside the board boundaries during the setup phase.
+    - `invalid_move_setup_occupied_cell`: Ensures an invalid move is detected when placing a piece on an occupied cell during the setup phase.
+    - `invalid_move_play_non_adjacent_cell`: Ensures an invalid move is detected when stacking a piece on a non-adjacent cell during the play phase.
+    - `invalid_move_play_non_orthogonal_cell`: Ensures an invalid move is detected when stacking a piece on a non-orthogonal cell during the play phase.
+    - `invalid_move_play_opponents_cell`: Ensures an invalid move is detected when stacking a piece from an opponent's cell during the play phase.
+
+3. **AI Behavior Tests:**
+    - `random_ai_makes_valid_move_setup`: Ensures the random AI makes a valid move during the setup phase.
+    - `random_ai_makes_valid_move_play`: Ensures the random AI makes a valid move during the play phase.
+    - `greedy_ai_makes_valid_move_setup`: Ensures the greedy AI makes a valid move during the setup phase.
+    - `greedy_ai_makes_valid_move_play`: Ensures the greedy AI makes a valid move during the play phase.
+    - `minimax_ai_makes_valid_move_setup`: Ensures the minimax AI makes a valid move during the setup phase.
+    - `minimax_ai_makes_valid_move_play`: Ensures the minimax AI makes a valid move during the play phase.
+
+4. **Game Initialization Tests:**
+    - `game_initializes_with_different_board_sizes`: Ensures the game initializes correctly with different board sizes.
+
+These tests help ensure that the game logic is functioning correctly and that the AI behaves as expected under various conditions.
 
 ## Images
 
