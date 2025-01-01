@@ -47,8 +47,9 @@ configure_game(2, [board_size(BoardSize), player1(blueH), player2(whitePC), diff
     format('1. Random~n', []),
     format('2. Greedy~n', []),
     format('3. Minimax~n', []),
-    format('Enter your choice (1-3): ', []),
+    prompt(_, 'Enter your choice (1-3): '),
     read(Difficulty),
+    prompt(_, '|: '),  % Reset the prompt to the default
     format('Starting Human vs Computer game with board size ~w and difficulty level ~w...~n', [BoardSize, Difficulty]).
 configure_game(3, [board_size(BoardSize), player1(bluePC), player2(whiteH), difficulty(Difficulty), optional_rules([]), player1_name('Computer'), player2_name('Player 2')], Difficulty, _) :-
     ask_board_size(BoardSize),
@@ -56,8 +57,9 @@ configure_game(3, [board_size(BoardSize), player1(bluePC), player2(whiteH), diff
     format('1. Random~n', []),
     format('2. Greedy~n', []),
     format('3. Minimax~n', []),
-    format('Enter your choice (1-3): ', []),
+    prompt(_, 'Enter your choice (1-3): '),
     read(Difficulty),
+    prompt(_, '|: '),  % Reset the prompt to the default
     format('Starting Computer vs Human game with board size ~w and difficulty level ~w...~n', [BoardSize, Difficulty]).
 configure_game(4, [board_size(BoardSize), player1(computer1), player2(computer2), optional_rules([]), player1_name('Computer 1'), player2_name('Computer 2')], Difficulty1, Difficulty2) :-
     ask_board_size(BoardSize),
@@ -65,23 +67,26 @@ configure_game(4, [board_size(BoardSize), player1(computer1), player2(computer2)
     format('1. Random~n', []),
     format('2. Greedy~n', []),
     format('3. Minimax~n', []),
-    format('Enter your choice (1-3): ', []),
+    prompt(_, 'Enter your choice (1-3): '),
     read(Difficulty1),
+    prompt(_, '|: '),  % Reset the prompt to the default
     format('Select difficulty level for Computer 2:~n', []),
     format('1. Random~n', []),
     format('2. Greedy~n', []),
     format('3. Minimax~n', []),
-    format('Enter your choice (1-3): ', []),
+    prompt(_, 'Enter your choice (1-3): '),
     read(Difficulty2),
+    prompt(_, '|: '),  % Reset the prompt to the default
     format('Starting Computer vs Computer game with board size ~w and difficulty levels ~w and ~w...~n', [BoardSize, Difficulty1, Difficulty2]).
 
 % Ask the user for the board size
 ask_board_size(BoardSize) :-
-    format('Enter the board size from 4 to 10 (e.g., 5 for a 5x5 board): ', []),
+    prompt(_, 'Enter the board size from 4 to 10 (e.g., 5 for a 5x5 board): '),
     read(BoardSize),
     integer(BoardSize),
     BoardSize >= 4,
-    BoardSize =< 10.
+    BoardSize =< 10,
+    prompt(_, '|: ').  % Reset the prompt to the default
 
 % initial_state(+GameConfig, -GameState)
 % Sets up the initial game state based on the provided configuration.
