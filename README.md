@@ -152,12 +152,6 @@ Another limitation is the inability to perform input validation for some inputs.
 1. **AI Enhancements:**
    - Implement advanced AI strategies for both the setup and play phases, including machine learning techniques to adapt to player behavior.
 
-2. **Multiplayer Support:**
-   - Add support for online multiplayer games, allowing players to compete against each other over the internet.
-
-3. **Mobile and Web Versions:**
-   - Develop mobile and web versions of the game to reach a broader audience and provide a seamless gaming experience across different platforms.
-
 
 ### Conclusions about the Work Carried Out
 The development of the STAQS game in Prolog has been a valuable learning experience, providing insights into game design, AI algorithms, and user interaction. The project successfully implemented a functional game with variable-sized boards and different difficulty levels. However, there are areas for improvement, particularly in enhancing the AI's strategic capabilities during the setup phase and optimizing performance for larger boards. Additionally, improving input validation for all user inputs is necessary to ensure a robust and error-free gaming experience. Overall, the project demonstrates the potential of Prolog for developing complex logic-based games and sets the foundation for future enhancements and extensions.
