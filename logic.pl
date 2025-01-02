@@ -56,14 +56,40 @@ valid_move(state(_, _, _, play, _), skip).
 
 % move(+GameState, +Move, -NewGameState)
 % Apply the move to the game state and return the new state
+%
+% The `move/3` predicate updates the game state based on the player's move. It handles different types of moves and transitions 
+% the game state accordingly. It follows these steps:
+%
+% 1. Skip Move:
+%    - If the move is `skip`, the current player skips their turn.
+%    - The `next_player/2` predicate is called to switch to the next player.
+%    - The game state is updated with the same board and pieces, but with the next player.
+%
+% 2. Place Move (Setup Phase):
+%    - If the move is `place(Y, X)`, the current player places a piece on the board during the setup phase.
+%    - The `place_piece/4` predicate is called to place the piece on the board.
+%    - The `next_player/2` predicate is called to switch to the next player.
+%    - The `update_pieces/4` predicate is called to update the number of remaining pieces for the current player.
+%    - If all pieces are placed, the game phase transitions to `play`; otherwise, it remains in `setup`.
+%
+% 3. Stack Move (Play Phase):
+%    - If the move is `stack(Y1, X1, Y2, X2)`, the current player stacks a piece from one cell to an adjacent cell during the 
+%      play phase.
+%    - The `stack_piece/5` predicate is called to stack the piece on the board.
+%    - The `next_player/2` predicate is called to switch to the next player.
+%    - The `update_pieces/4` predicate is called, but the number of pieces does not change during the play phase.
+%
+% The `move/3` predicate ensures that the game state is updated correctly based on the player's move, maintaining the integrity of 
+% the game logic.
+
+% Skip Move
 move(GameState, Move, NewGameState) :-
     GameState = state(Board, Player, Pieces, play, BoardSize),
     Move = skip,
     NewGameState = state(Board, NextPlayer, Pieces, play, BoardSize),
     next_player(Player, NextPlayer).
 
-% move(+GameState, +Move, -NewGameState)
-% Apply the move to the game state and return the new state
+% Place Move (Setup Phase)
 move(GameState, Move, NewGameState) :-
     GameState = state(Board, Player, Pieces, setup, BoardSize),
     Move = place(Y, X),
@@ -73,8 +99,7 @@ move(GameState, Move, NewGameState) :-
     update_pieces(Player, Pieces, NewPieces, setup),
     (NewPieces = [Player1-0, Player2-0] -> NewPhase = play ; NewPhase = setup).  % Transition to play phase if all pieces are placed
 
-% move(+GameState, +Move, -NewGameState)
-% Apply the move to the game state and return the new state
+% Stack Move (Play Phase)
 move(GameState, Move, NewGameState) :-
     GameState = state(Board, Player, Pieces, play, BoardSize),
     Move = stack(Y1, X1, Y2, X2),
@@ -82,7 +107,6 @@ move(GameState, Move, NewGameState) :-
     stack_piece(Board, X1, Y1, X2, Y2, NewBoard),
     next_player(Player, NextPlayer),
     update_pieces(Player, Pieces, NewPieces, play).  % Do not decrement pieces during the play phase
-
 % Place a piece on the board
 place_piece(Board, X, Y, Player, NewBoard) :-
     nth1(Y, Board, Row),
@@ -140,6 +164,26 @@ update_pieces(_, Pieces, Pieces, play).  % Do not decrement pieces during the pl
 
 % game_over(+GameState, -Winner)
 % Check if the game is over and return the winner
+%
+% The `game_over/2` predicate determines if the game has ended and identifies the winner. It follows these steps:
+%
+% 1. Extract Game State Information:
+%    The predicate extracts the `Board`, `Player`, `Pieces`, and `BoardSize` from the `GameState` structure. This information 
+%    is used to check the game-over conditions.
+%
+% 2. Check for No More Moves:
+%    The predicate checks if there are no more valid moves for both players. This is done by calling the `no_more_moves/1` 
+%    predicate for each player (`Player1` and `Player2`). If both players have no valid moves left, the game is considered over.
+%
+% 3. Determine the Winner:
+%    If the game is over, the `tallest_stack/3` predicate is called to determine the winner based on the tallest stack on the 
+%    board. The `tallest_stack/3` predicate finds the player with the tallest stack and assigns them as the winner.
+%
+% The `game_over/2` predicate ensures that the game ends correctly when no more valid moves are available for both players 
+% and identifies the winner based on the tallest stack.
+
+% game_over(+GameState, -Winner)
+% Check if the game is over and return the winner
 game_over(GameState, Winner) :-
     GameState = state(Board, Player, Pieces, play, BoardSize),
     Pieces = [Player1-_, Player2-_],
@@ -173,6 +217,32 @@ no_more_moves(state(Board, Player, Pieces, Phase, BoardSize)) :-
 
 % valid_moves(+GameState, -Moves)
 % Find all valid moves for a player in the setup phase
+%
+% The `valid_moves/2` predicate generates a list of all valid moves for the current player based on the game state. It handles 
+% both the setup and play phases of the game. It follows these steps:
+%
+% 1. Setup Phase:
+%    - The predicate checks if the game is in the `setup` phase by matching the `Phase` in the `GameState` structure.
+%    - It uses the `findall/3` predicate to collect all valid `place(Y, X)` moves. These moves represent placing a piece on the
+%      board at coordinates `(Y, X)`.
+%    - The `between/3` predicate is used to iterate over all possible positions on the board, from `1` to `BoardSize` for both 
+%      `Y` and `X`.
+%    - For each position, the `valid_move/2` predicate is called to check if placing a piece at that position is valid. If it 
+%      is valid, the move is included in the `Moves` list.
+%
+% 2. Play Phase:
+%    - The predicate checks if the game is in the `play` phase by matching the `Phase` in the `GameState` structure.
+%    - It uses the `findall/3` predicate to collect all valid `stack(Y1, X1, Y2, X2)` moves. These moves represent stacking a 
+%      piece from coordinates `(Y1, X1)` to an adjacent cell `(Y2, X2)`.
+%    - The `between/3` predicate is used to iterate over all possible source and destination positions on the board, from `1` to `
+%      BoardSize` for both `Y1`, `X1`, `Y2`, and `X2`.
+%    - For each pair of source and destination positions, the `valid_move/2` predicate is called to check if stacking a piece 
+%      from the source to the destination is valid. If it is valid, the move is included in the `Moves` list.
+%
+% The `valid_moves/2` predicate ensures that all possible valid moves for the current player are generated, providing a 
+% comprehensive list of options for the player to choose from.
+
+% Find all valid moves for a player in the setup phase
 valid_moves(GameState, Moves) :-
     GameState = state(Board, Player, Pieces, setup, BoardSize),
     findall(place(Y, X), (
@@ -180,7 +250,6 @@ valid_moves(GameState, Moves) :-
         valid_move(state(Board, Player, Pieces, setup, BoardSize), place(Y, X))
     ), Moves).
 
-% valid_moves(+GameState, -Moves)
 % Find all valid moves for a player in the play phase
 valid_moves(GameState, Moves) :-
     GameState = state(Board, Player, Pieces, play, BoardSize),

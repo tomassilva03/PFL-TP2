@@ -1,6 +1,37 @@
 % ai.pl - Contains the AI logic for choosing moves
 
-% choose_move(+GameState, +Difficulty, -Move).
+% choose_move(+GameState, +Difficulty, -Move)
+% Choose a move based on the difficulty level
+%
+% The `choose_move/3` predicate selects a move for the AI player based on the current game state and the specified 
+% difficulty level. It follows these steps:
+%
+% 1. Extract Game State Information:
+%    The predicate extracts the `Phase` from the `GameState` structure to determine whether the game is in the setup or 
+%    play phase.
+%
+% 2. Generate Valid Moves:
+%    The `valid_moves/2` predicate is called to generate a list of all valid moves for the current player based on the game state.
+%
+% 3. Select Move Based on Phase:
+%    - If the game is in the `setup` phase, the `random_member/2` predicate is used to select a random move from the list 
+%      of valid moves. This ensures that the AI places pieces randomly during the setup phase.
+%
+% 4. Select Move Based on Difficulty:
+%    - If the game is in the `play` phase, the move selection is based on the specified difficulty level:
+%      - Difficulty 1: The `random_member/2` predicate is used to select a random move from the list of valid moves.
+%      - Difficulty 2: The `choose_greedy_move/3` predicate is called to select the move that maximizes the immediate value 
+%        based on the greedy algorithm.
+%      - Difficulty 3: The `minimax/4` predicate is called to select the move that maximizes the long-term value based on 
+%        the minimax algorithm with a depth limit of 4.
+%
+% 5. Print the Selected Move:
+%    The `format/2` predicate is used to print the selected move to the console for information purposes.
+%
+% The `choose_move/3` predicate ensures that the AI selects an appropriate move based on the current game phase and difficulty 
+% level, providing a challenging opponent for the player.
+
+% choose_move(+GameState, +Difficulty, -Move)
 % Choose a move based on the level
 choose_move(GameState, Difficulty, Move) :-
     GameState = state(_, Player, _, Phase, BoardSize),
@@ -18,6 +49,31 @@ choose_move(GameState, Difficulty, Move) :-
         )
     ),
     format('Computer chooses move: ~w~n', [Move]).
+
+% value(+GameState, +Move, -Value)
+% Calculate the value of a move by simulating the move and evaluating the resulting game state
+%
+% The `value/3` predicate evaluates the potential outcome of a move by simulating its effect on the game state and 
+% calculating a score. It follows these steps:
+%
+% 1. Extract Move Coordinates:
+%    The predicate extracts the coordinates `(Y1, X1)` and `(Y2, X2)` from the `Move` structure, which represents stacking 
+%    a piece from `(Y1, X1)` to `(Y2, X2)`.
+%
+% 2. Simulate the Move:
+%    The `move/3` predicate is called to apply the move to the current `GameState`, resulting in a new game state 
+%    `state(NewBoard, _, _, _, BoardSize)`. This simulates the effect of the move on the board.
+%
+% 3. Extract the New Stack:
+%    The predicate uses `nth1/3` to access the row `Row` at position `Y2` in the `NewBoard`, and then accesses the 
+%    cell at position `X2` in that row. This cell contains the new stack created by the move, represented as `Player-NewCount`.
+%
+% 4. Calculate the Value:
+%    The value of the move is determined by the height of the new stack, `NewCount`. This value is assigned to the 
+%    `Value` variable.
+%
+% The `value/3` predicate provides a way to evaluate the effectiveness of a move by considering the resulting stack 
+% height, which is useful for AI decision-making.
 
 % Calculate the value of a move by simulating the move and evaluating the resulting game state
 value(GameState, Move, Value) :-

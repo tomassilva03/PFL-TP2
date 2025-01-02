@@ -14,6 +14,36 @@ initialize_row(BoardSize, Row) :-
 
 % display_game(+GameState)
 % Display the game state
+%
+% The `display_game/1` predicate is responsible for displaying the current state of the game to the player. It follows 
+% these steps:
+%
+% 1. Extract Game State Information:
+%    The predicate extracts the `Board`, `Player`, `Pieces`, `Phase`, and `BoardSize` from the `GameState` structure. This 
+%    information is used to display the current game state.
+%
+% 2. Determine the Board Size:
+%    The `length/2` predicate is used to determine the size of the board by measuring the length of the `Board` list. This 
+%    ensures that the board is displayed correctly regardless of its size.
+%
+% 3. Print the Board:
+%    The `print_board/2` predicate is called to print the entire board, including the pieces or stacks in each cell. The board 
+%    is displayed with row and column headers for easy reference.
+%
+% 4. Display the Current Player:
+%    The `format/2` predicate is used to display the current player whose turn it is to move. This helps players keep track of 
+%    whose turn it is.
+%
+% 5. Display the Remaining Pieces:
+%    The `format_pieces/1` predicate is called to display the number of remaining pieces for each player. This information is 
+%    important for players to strategize their moves.
+%
+% 6. Display the Current Phase:
+%    The `format/2` predicate is used to display the current phase of the game (`setup` or `play`). This helps players 
+%    understand the current stage of the game.
+%
+% The `display_game/1` predicate ensures that the game state is presented in a clear and informative manner, providing players 
+% with all the necessary information to make informed decisions.
 display_game(GameState) :-
     GameState = state(Board, Player, Pieces, Phase, BoardSize),
     length(Board, BoardSize),  % Determine the board size
