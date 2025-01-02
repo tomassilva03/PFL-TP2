@@ -135,40 +135,39 @@ evaluate(GameState, Score) :-
     max_member(TallestStack, Counts),
     opponent(Player, Opponent),
     findall(OpponentDistance, (
-        member(Row, Board),
-        member(Player-Count, Row),
+        nth1(Y1, Board, Row),
+        nth1(X1, Row, Player-Count),
         Count > 0,
         findall(Distance, (
-            member(OpponentRow, Board),
-            member(Opponent-OpponentCount, OpponentRow),
+            nth1(Y2, Board, OpponentRow),
+            nth1(X2, OpponentRow, Opponent-OpponentCount),
             nonvar(Count),
             nonvar(OpponentCount),
-            distance(Player-Count, Opponent-OpponentCount, Distance)
+            manhattan_distance(X1, Y1, X2, Y2, Distance)
         ), Distances),
         min_list(Distances, OpponentDistance)
     ), OpponentDistances),
     sumlist(OpponentDistances, TotalOpponentDistance),
     findall(PlayerDistance, (
-        member(Row, Board),
-        member(Player-Count, Row),
+        nth1(Y1, Board, Row),
+        nth1(X1, Row, Player-Count),
         Count > 0,
         findall(Distance, (
-            member(PlayerRow, Board),
-            member(Player-PlayerCount, PlayerRow),
+            nth1(Y2, Board, PlayerRow),
+            nth1(X2, PlayerRow, Player-PlayerCount),
             nonvar(Count),
             nonvar(PlayerCount),
-            distance(Player-Count, Player-PlayerCount, Distance)
+            manhattan_distance(X1, Y1, X2, Y2, Distance)
         ), Distances),
         min_list(Distances, PlayerDistance)
     ), PlayerDistances),
     sumlist(PlayerDistances, TotalPlayerDistance),
-    Score is TallestStack - TotalOpponentDistance + TotalPlayerDistance.
+    Score is TallestStack - TotalOpponentDistance + TotalPlayerDistance,
+    format('Evaluating GameState: ~w, TallestStack: ~w, TotalOpponentDistance: ~w, TotalPlayerDistance: ~w, Score: ~w~n', [GameState, TallestStack, TotalOpponentDistance, TotalPlayerDistance, Score]).
 
-% Calculate the Manhattan distance between two stacks
-distance(Player-Count1, Opponent-Count2, Distance) :-
-    nonvar(Count1),
-    nonvar(Count2),
-    abs(Count1 - Count2, Distance).
+% Calculate the Manhattan distance between two coordinates
+manhattan_distance(X1, Y1, X2, Y2, Distance) :-
+    Distance is abs(X1 - X2) + abs(Y1 - Y2).
 
 % Calculate the absolute value of a number
 abs(X, AbsX) :-
