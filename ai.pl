@@ -35,7 +35,7 @@ choose_greedy_move(GameState, Moves, BestMove) :-
     ), MoveValues),
     max_member(_-BestMove, MoveValues).
 
-% Minimax algorithm with depth limit, focusing only on maximizing the value
+% Minimax algorithm with depth limit, focusing on maximizing the value and minimizing opponent's advantage
 minimax(GameState, Depth, BestMove, BestValue) :-
     Depth > 0,
     valid_moves(GameState, Moves),
@@ -61,12 +61,57 @@ minimax(GameState, _, _, Value) :-
 minimax_value(GameState, Depth, Value) :-
     minimax(GameState, Depth, _, Value).
 
-% Evaluate the game state by finding the tallest stack created by the player
+% Evaluate the game state by finding the tallest stack created by the player and minimizing opponent's advantage
 evaluate(GameState, Score) :-
     GameState = state(Board, Player, _, _, BoardSize),
     findall(Count, (
         member(Row, Board),
         member(Player-Count, Row)
     ), Counts),
-    max_member(Score, Counts).
+    max_member(TallestStack, Counts),
+    opponent(Player, Opponent),
+    findall(Distance, (
+        member(Row, Board),
+        member(Player-Count, Row),
+        Count > 0,
+        findall(OpponentDistance, (
+            member(OpponentRow, Board),
+            member(Opponent-OpponentCount, OpponentRow),
+            nonvar(Count),
+            nonvar(OpponentCount),
+            distance(Player-Count, Opponent-OpponentCount, OpponentDistance)
+        ), Distances),
+        min_list(Distances, Distance)
+    ), Distances),
+    sumlist(Distances, TotalDistance),
+    Score is TallestStack - TotalDistance.
 
+% Calculate the Manhattan distance between two stacks
+distance(Player-Count1, Opponent-Count2, Distance) :-
+    nonvar(Count1),
+    nonvar(Count2),
+    abs(Count1 - Count2, Distance).
+
+% Calculate the absolute value of a number
+abs(X, AbsX) :-
+    (X >= 0 ->
+        AbsX = X
+    ;
+        AbsX is -X
+    ).
+
+% Find the minimum value in a list
+min_list([Min], Min).
+min_list([H|T], Min) :-
+    min_list(T, MinTail),
+    Min is min(H, MinTail).
+
+% Determine the opponent player
+opponent(blue, white).
+opponent(white, blue).
+opponent(blueH, whitePC).
+opponent(whitePC, blueH).
+opponent(bluePC, whiteH).
+opponent(whiteH, bluePC).
+opponent(computer1, computer2).
+opponent(computer2, computer1).
