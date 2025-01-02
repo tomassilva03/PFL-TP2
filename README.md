@@ -12,7 +12,7 @@
    **Full Name:** Tomás Rebelo da Silva
 
    **Contribution:** 100%  
-   
+
    **Tasks Performed:** All of them
 
 ## Installation and Execution
@@ -158,6 +158,32 @@ Another limitation is the inability to perform input validation for some inputs.
 
 ### Conclusions about the Work Carried Out
 The development of the STAQS game in Prolog has been a valuable learning experience, providing insights into game design, AI algorithms, and user interaction. The project successfully implemented a functional game with variable-sized boards and different difficulty levels. However, there are areas for improvement, particularly in enhancing the AI's strategic capabilities during the setup phase and optimizing performance for larger boards. Additionally, improving input validation for all user inputs is necessary to ensure a robust and error-free gaming experience. Overall, the project demonstrates the potential of Prolog for developing complex logic-based games and sets the foundation for future enhancements and extensions.
+
+## Minimax Algorithm Strategy
+
+### Overview
+The minimax algorithm is used to determine the best move for the AI by simulating all possible moves and their outcomes up to a certain depth. It aims to maximize the AI's advantage while minimizing the opponent's advantage. The algorithm evaluates the game state and assigns a score based on the potential outcomes.
+
+### Strategy
+1. **Move Simulation:**
+   - The algorithm simulates all possible moves for the AI and the opponent up to a specified depth.
+   - For each move, it generates a new game state and recursively evaluates the resulting game states.
+
+2. **Evaluation Function:**
+   - The evaluation function assigns a score to each game state based on the tallest stack created by the AI.
+   - The score is calculated by finding the maximum stack height for the AI's pieces on the board.
+
+3. **Maximizing and Minimizing:**
+   - The algorithm alternates between maximizing the AI's score and minimizing the opponent's score.
+   - At each level of the recursion, the algorithm chooses the move that maximizes the AI's score if it is the AI's turn, or minimizes the opponent's score if it is the opponent's turn.
+
+4. **Depth Limit:**
+   - The algorithm uses a depth limit to control the number of levels it explores in the game tree.
+   - When the depth limit is reached, the evaluation function is used to assign a score to the game state.
+
+5. **Best Move Selection:**
+   - After evaluating all possible moves, the algorithm selects the move with the highest score for the AI.
+   - This move is considered the best move based on the current game state and the specified depth.
 
 ## Tests
 
