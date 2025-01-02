@@ -8,8 +8,11 @@
 
 **Members:**
 1. **Student Number:** up202108698
+
    **Full Name:** Tomás Rebelo da Silva
+
    **Contribution:** 100%  
+   
    **Tasks Performed:** All of them
 
 ## Installation and Execution
