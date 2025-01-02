@@ -54,9 +54,9 @@ display_game(GameState) :-
 
 % Print the entire board with borders
 print_board(Board, BoardSize) :-
-    write('  |'),
+    write('   |'),
     print_column_headers(1, BoardSize), nl,  % Column headers
-    write('--+'),
+    write('---+'),
     print_row_borders(1, BoardSize), nl,
     print_board_rows(Board, 1, BoardSize).  % Start printing rows with indices
 
@@ -81,9 +81,9 @@ print_row_borders(Col, BoardSize) :-
 % Print each row with borders and row indices
 print_board_rows([], _, _).
 print_board_rows([Row|Rest], RowIndex, BoardSize) :-
-    format('~d |', [RowIndex]),  % Row index
+    format('~|~` t~d~2+ |', [RowIndex]),  % Row index with fixed width of 2
     print_row(Row, BoardSize), nl,
-    write('--+'),
+    write('---+'),
     print_row_borders(1, BoardSize), nl,  % Row border
     NextRowIndex is RowIndex + 1,
     print_board_rows(Rest, NextRowIndex, BoardSize).

@@ -166,11 +166,8 @@ initial_state(GameConfig, GameState) :-
     CurrentPlayer = Player1,
     
     % Set the initial pieces for each player based on the board size
-    ( BoardSize >= 7 ->
-        InitialPieces = 6  % More pieces for larger boards
-    ; 
-        InitialPieces = 4  % Default number of pieces
-    ),
+    TotalCells is BoardSize * BoardSize,
+    InitialPieces is round(TotalCells * 0.32 / 2),  % 32% of the total cells, divided by 2 for each player
     Pieces = [Player1-InitialPieces, Player2-InitialPieces],
     
     % Set the initial phase

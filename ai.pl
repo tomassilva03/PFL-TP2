@@ -3,12 +3,12 @@
 % choose_move(+GameState, +Difficulty, -Move)
 % Choose a move based on the difficulty level
 %
-% The `choose_move/3` predicate selects a move for the AI player based on the current game state and the specified 
-% difficulty level. It follows these steps:
+% The `choose_move/3` predicate selects a move for the AI player based on the current game state and the specified difficulty 
+% level. It follows these steps:
 %
 % 1. Extract Game State Information:
-%    The predicate extracts the `Phase` from the `GameState` structure to determine whether the game is in the setup or 
-%    play phase.
+%    The predicate extracts the `Phase` and `BoardSize` from the `GameState` structure to determine whether the game is in 
+%    the setup or play phase and the size of the board.
 %
 % 2. Generate Valid Moves:
 %    The `valid_moves/2` predicate is called to generate a list of all valid moves for the current player based on the game state.
@@ -22,17 +22,19 @@
 %      - Difficulty 1: The `random_member/2` predicate is used to select a random move from the list of valid moves.
 %      - Difficulty 2: The `choose_greedy_move/3` predicate is called to select the move that maximizes the immediate value 
 %        based on the greedy algorithm.
-%      - Difficulty 3: The `minimax/4` predicate is called to select the move that maximizes the long-term value based on 
-%        the minimax algorithm with a depth limit of 4.
+%      - Difficulty 3: The `minimax/4` predicate is called to select the move that maximizes the long-term value based on the 
+%        minimax algorithm with an adaptive depth based on the board size:
+%        - Board size 4: Depth 6
+%        - Board size 5: Depth 4
+%        - Board size 6: Depth 3
+%        - Board size 7 and above: Depth 2
 %
 % 5. Print the Selected Move:
-%    The `format/2` predicate is used to print the selected move to the console for information purposes.
+%    The `format/2` predicate is used to print the selected move to the console for debugging purposes.
 %
 % The `choose_move/3` predicate ensures that the AI selects an appropriate move based on the current game phase and difficulty 
 % level, providing a challenging opponent for the player.
 
-% choose_move(+GameState, +Difficulty, -Move)
-% Choose a move based on the level
 choose_move(GameState, Difficulty, Move) :-
     GameState = state(_, Player, _, Phase, BoardSize),
     valid_moves(GameState, Moves),
@@ -45,7 +47,14 @@ choose_move(GameState, Difficulty, Move) :-
         ; Difficulty = 2 ->
             choose_greedy_move(GameState, Moves, Move)  % Greedy move for level 2
         ; Difficulty = 3 ->
-            minimax(GameState, 4, Move, _)  % Minimax move for level 3
+            % Determine depth based on board size
+            (BoardSize = 4 -> Depth = 6
+            ; BoardSize = 5 -> Depth = 4
+            ; BoardSize = 6 -> Depth = 3
+            ; Depth = 2  % For board sizes 7 and above
+            ),
+            format('Debug: Depth: ~w~n', [Depth]),
+            minimax(GameState, Depth, Move, _)  % Minimax move with adaptive depth
         )
     ),
     format('Computer chooses move: ~w~n', [Move]).
