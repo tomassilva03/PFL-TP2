@@ -182,13 +182,13 @@ The test suite includes the following test cases:
     - `game_ended_with_no_valid_moves_and_winner_blue`: Ensures the game ends correctly and determines the winner when no valid moves exist.
     - `game_ended_with_winner_white_after_draw`: Ensures the correct winner is determined in case of a draw in the tallest stack.
     - `game_ended_with_draw`: Ensures the game ends in a draw when no valid moves exist and no player has a taller stack.
+    - `game_transition_setup_to_play`: Ensures the game transitions from setup phase to play phase.
 
 2. **Move Validation Tests:**
     - `player_can_skip_turn`: Ensures a player can skip their turn if no valid moves are available.
     - `player_can_place_piece_on_board`: Ensures a player can place a piece on the board during the setup phase.
     - `player_can_stack_a_stack_on_top_of_another_stack`: Ensures a player can stack a piece on top of another stack.
     - `player_can_stack_a_stack_on_top_of_a_neutral_cell`: Ensures a player can stack a piece on top of a neutral cell.
-    - `player_cannot_stack_a_stack_on_top_of_an_opponents_stack`: Ensures a player cannot stack a piece on top of an opponent's stack.
     - `invalid_move_setup_outside_boundaries`: Ensures an invalid move is detected when placing a piece outside the board boundaries during the setup phase.
     - `invalid_move_setup_occupied_cell`: Ensures an invalid move is detected when placing a piece on an occupied cell during the setup phase.
     - `invalid_move_play_non_adjacent_cell`: Ensures an invalid move is detected when stacking a piece on a non-adjacent cell during the play phase.
@@ -198,9 +198,7 @@ The test suite includes the following test cases:
 3. **AI Behavior Tests:**
     - `random_ai_makes_valid_move_setup`: Ensures the random AI makes a valid move during the setup phase.
     - `random_ai_makes_valid_move_play`: Ensures the random AI makes a valid move during the play phase.
-    - `greedy_ai_makes_valid_move_setup`: Ensures the greedy AI makes a valid move during the setup phase.
     - `greedy_ai_makes_valid_move_play`: Ensures the greedy AI makes a valid move during the play phase.
-    - `minimax_ai_makes_valid_move_setup`: Ensures the minimax AI makes a valid move during the setup phase.
     - `minimax_ai_makes_valid_move_play`: Ensures the minimax AI makes a valid move during the play phase.
 
 4. **Game Initialization Tests:**

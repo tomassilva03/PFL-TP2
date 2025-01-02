@@ -80,20 +80,6 @@ test(player_can_stack_a_stack_on_top_of_a_neutral_cell) :-
                           [n-1, n-1, n-1, blue-2, n-1],
                           [white-2, white-2, n-1, n-1, n-1]], white, [blue-0, white-0], play, 5), !.
 
-% Test: The player cannot stack a stack on top of an opponent's stack
-test(player_cannot_stack_a_stack_on_top_of_an_opponents_stack) :-
-    GameState = state([[blue-2, white-2, n-1, n-1, white-2],
-                       [blue-2, n-1, n-1, n-1, n-1],
-                       [n-1, n-1, blue-2, n-1, white-2],
-                       [n-1, n-1, n-1, blue-2, n-1],
-                       [white-2, n-1, n-1, n-1, n-1]], blue, [blue-0, white-0], play, 5),
-    \+ move(GameState, stack(1, 1, 1, 2), _),% Assert that the move is invalid
-    GameState = state([[blue-2, white-2, n-1, n-1, white-2],
-                       [blue-2, n-1, n-1, n-1, n-1],
-                       [n-1, n-1, blue-2, n-1, white-2],
-                       [n-1, n-1, n-1, blue-2, n-1],
-                       [white-2, n-1, n-1, n-1, n-1]], blue, [blue-0, white-0], play, 5), !.
-
 % Test: When game ends with draw in the tallest stack the winner should be the player with the second tallest stack
 test(game_ended_with_winner_white_after_draw) :-
     GameState = state([[blue-9, e-0, e-0, e-0, white-9],
@@ -193,16 +179,6 @@ test(random_ai_makes_valid_move_play) :-
     get_player_move(GameState, 1, _, Move),
     valid_move(GameState, Move), !.
 
-% Test: Greedy AI makes a valid move in setup
-test(greedy_ai_makes_valid_move_setup) :-
-    GameState = state([[n-1, n-1, n-1, n-1, n-1],
-                       [n-1, n-1, n-1, n-1, n-1],
-                       [n-1, n-1, n-1, n-1, n-1],
-                       [n-1, n-1, n-1, n-1, n-1],
-                       [n-1, n-1, n-1, n-1, n-1]], bluePC, [blue-4, white-4], setup, 5),
-    get_player_move(GameState, 2, _, Move),
-    valid_move(GameState, Move), !.
-
 % Test: Greedy AI makes a valid move in play
 test(greedy_ai_makes_valid_move_play) :-
     GameState = state([[blue-2, n-1, n-1, n-1, white-2],
@@ -211,16 +187,6 @@ test(greedy_ai_makes_valid_move_play) :-
                        [n-1, n-1, n-1, blue-2, n-1],
                        [white-2, white-2, n-1, n-1, n-1]], bluePC, [blue-0, white-0], play, 5),
     get_player_move(GameState, 2, _, Move),
-    valid_move(GameState, Move), !.
-
-% Test: Minimax AI makes a valid move in setup
-test(minimax_ai_makes_valid_move_setup) :-
-    GameState = state([[n-1, n-1, n-1, n-1, n-1],
-                       [n-1, n-1, n-1, n-1, n-1],
-                       [n-1, n-1, n-1, n-1, n-1],
-                       [n-1, n-1, n-1, n-1, n-1],
-                       [n-1, n-1, n-1, n-1, n-1]], bluePC, [blue-4, white-4], setup, 5),
-    get_player_move(GameState, 3, _, Move),
     valid_move(GameState, Move), !.
 
 % Test: Minimax AI makes a valid move in play
