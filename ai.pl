@@ -53,7 +53,6 @@ choose_move(GameState, Difficulty, Move) :-
             ; BoardSize = 6 -> Depth = 3
             ; Depth = 2  % For board sizes 7 and above
             ),
-            format('Debug: Depth: ~w~n', [Depth]),
             minimax(GameState, Depth, Move, _)  % Minimax move with adaptive depth
         )
     ),
@@ -135,21 +134,35 @@ evaluate(GameState, Score) :-
     ), Counts),
     max_member(TallestStack, Counts),
     opponent(Player, Opponent),
-    findall(Distance, (
+    findall(OpponentDistance, (
         member(Row, Board),
         member(Player-Count, Row),
         Count > 0,
-        findall(OpponentDistance, (
+        findall(Distance, (
             member(OpponentRow, Board),
             member(Opponent-OpponentCount, OpponentRow),
             nonvar(Count),
             nonvar(OpponentCount),
-            distance(Player-Count, Opponent-OpponentCount, OpponentDistance)
+            distance(Player-Count, Opponent-OpponentCount, Distance)
         ), Distances),
-        min_list(Distances, Distance)
-    ), Distances),
-    sumlist(Distances, TotalDistance),
-    Score is TallestStack - TotalDistance.
+        min_list(Distances, OpponentDistance)
+    ), OpponentDistances),
+    sumlist(OpponentDistances, TotalOpponentDistance),
+    findall(PlayerDistance, (
+        member(Row, Board),
+        member(Player-Count, Row),
+        Count > 0,
+        findall(Distance, (
+            member(PlayerRow, Board),
+            member(Player-PlayerCount, PlayerRow),
+            nonvar(Count),
+            nonvar(PlayerCount),
+            distance(Player-Count, Player-PlayerCount, Distance)
+        ), Distances),
+        min_list(Distances, PlayerDistance)
+    ), PlayerDistances),
+    sumlist(PlayerDistances, TotalPlayerDistance),
+    Score is TallestStack - TotalOpponentDistance + TotalPlayerDistance.
 
 % Calculate the Manhattan distance between two stacks
 distance(Player-Count1, Opponent-Count2, Distance) :-
