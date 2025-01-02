@@ -170,8 +170,8 @@ The minimax algorithm is used to determine the best move for the AI by simulatin
    - For each move, it generates a new game state and recursively evaluates the resulting game states.
 
 2. **Evaluation Function:**
-   - The evaluation function assigns a score to each game state based on two factors: the tallest stack created by the AI and the proximity of the AI's stacks to the opponent's stacks.
-   - The score is calculated by finding the maximum stack height for the AI's pieces on the board and subtracting the total distance of the AI's stacks from the opponent's stacks. This encourages the AI to create tall stacks while also positioning its stacks close to the opponent's stacks to limit their available moves.
+   - The evaluation function assigns a score to each game state based on three factors: the tallest stack created by the AI, the proximity of the AI's stacks to the opponent's stacks, and the proximity of the AI's stacks to its own stacks.
+   - The score is calculated by finding the maximum stack height for the AI's pieces on the board, subtracting the total distance of the AI's stacks from the opponent's stacks, and adding the total distance of the AI's stacks from its own stacks. This encourages the AI to create tall stacks while positioning its stacks close to both the opponent's stacks (to limit their available moves) and its own stacks (to maximize its potential moves).
 
 3. **Maximizing and Minimizing:**
    - The algorithm alternates between maximizing the AI's score and minimizing the opponent's score.

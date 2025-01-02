@@ -162,8 +162,7 @@ evaluate(GameState, Score) :-
         min_list(Distances, PlayerDistance)
     ), PlayerDistances),
     sumlist(PlayerDistances, TotalPlayerDistance),
-    Score is TallestStack - TotalOpponentDistance + TotalPlayerDistance,
-    format('Evaluating GameState: ~w, TallestStack: ~w, TotalOpponentDistance: ~w, TotalPlayerDistance: ~w, Score: ~w~n', [GameState, TallestStack, TotalOpponentDistance, TotalPlayerDistance, Score]).
+    Score is TallestStack - TotalOpponentDistance + TotalPlayerDistance.
 
 % Calculate the Manhattan distance between two coordinates
 manhattan_distance(X1, Y1, X2, Y2, Distance) :-
