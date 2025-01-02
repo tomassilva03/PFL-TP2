@@ -46,19 +46,16 @@ minimax(GameState, Depth, BestMove, BestValue) :-
         move(GameState, Move, NewGameState),
         minimax_value(NewGameState, NewDepth, Value)
     ), MoveValues),
-    max_member(BestValue-BestMove, MoveValues),
-    format('Depth: ~w, BestMove: ~w, BestValue: ~w~n', [Depth, BestMove, BestValue]).
+    max_member(BestValue-BestMove, MoveValues).
 
 % Base case: evaluate the game state when depth is 0 or no moves are available
 minimax(GameState, 0, _, Value) :-
-    evaluate(GameState, Value),
-    format('Depth: 0, Value: ~w~n', [Value]).
+    evaluate(GameState, Value).
 
 minimax(GameState, _, _, Value) :-
     valid_moves(GameState, Moves),
     Moves = [],
-    evaluate(GameState, Value),
-    format('No more valid moves, Value: ~w~n', [Value]).
+    evaluate(GameState, Value).
 
 % Determine the value for the minimax algorithm
 minimax_value(GameState, Depth, Value) :-
@@ -87,15 +84,13 @@ evaluate(GameState, Score) :-
         min_list(Distances, Distance)
     ), Distances),
     sumlist(Distances, TotalDistance),
-    Score is TallestStack - TotalDistance,
-    format('Evaluating GameState: ~w, TallestStack: ~w, TotalDistance: ~w, Score: ~w~n', [GameState, TallestStack, TotalDistance, Score]).
+    Score is TallestStack - TotalDistance.
 
 % Calculate the Manhattan distance between two stacks
 distance(Player-Count1, Opponent-Count2, Distance) :-
     nonvar(Count1),
     nonvar(Count2),
-    abs(Count1 - Count2, Distance),
-    format('Distance between ~w and ~w: ~w~n', [Player-Count1, Opponent-Count2, Distance]).
+    abs(Count1 - Count2, Distance).
 
 % Calculate the absolute value of a number
 abs(X, AbsX) :-
