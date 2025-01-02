@@ -86,7 +86,7 @@ evaluate(GameState, Score) :-
         ), Distances),
         min_list(Distances, Distance)
     ), Distances),
-    sum_list(Distances, TotalDistance),
+    sumlist(Distances, TotalDistance),
     Score is TallestStack - TotalDistance,
     format('Evaluating GameState: ~w, TallestStack: ~w, TotalDistance: ~w, Score: ~w~n', [GameState, TallestStack, TotalDistance, Score]).
 
@@ -110,12 +110,6 @@ min_list([Min], Min).
 min_list([H|T], Min) :-
     min_list(T, MinTail),
     Min is min(H, MinTail).
-
-% Calculate the sum of elements in a list
-sum_list([], 0).
-sum_list([H|T], Sum) :-
-    sum_list(T, SumTail),
-    Sum is H + SumTail.
 
 % Determine the opponent player
 opponent(blue, white).
