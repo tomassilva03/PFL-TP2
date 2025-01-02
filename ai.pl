@@ -105,68 +105,65 @@ minimax(GameState, Depth, BestMove, BestValue) :-
     valid_moves(GameState, Moves),
     Moves \= [],
     NewDepth is Depth - 1,
+    format('Depth: ~w, Valid Moves: ~w~n', [Depth, Moves]),
     findall(Value-Move, (
         member(Move, Moves),
         move(GameState, Move, NewGameState),
-        minimax_value(NewGameState, NewDepth, Value)
+        format('Evaluating Move: ~w at Depth: ~w~n', [Move, NewDepth]),
+        minimax_value(NewGameState, NewDepth, Move, Value)
     ), MoveValues),
-    max_member(BestValue-BestMove, MoveValues).
+    format('MoveValues: ~w~n', [MoveValues]),
+    max_member(BestValue-BestMove, MoveValues),
+    format('BestMove: ~w, BestValue: ~w~n', [BestMove, BestValue]).
 
 % Base case: evaluate the game state when depth is 0 or no moves are available
-minimax(GameState, 0, _, Value) :-
-    evaluate(GameState, Value).
+minimax(GameState, 0, Move, Value) :-
+    format('Depth: 0, Evaluating Move: ~w~n', [Move]),
+    evaluate(GameState, Move, Value).
 
 minimax(GameState, _, _, Value) :-
     valid_moves(GameState, Moves),
     Moves = [],
-    evaluate(GameState, Value).
+    format('No more valid moves, evaluating game state~n', []),
+    evaluate(GameState, _, Value).
 
 % Determine the value for the minimax algorithm
-minimax_value(GameState, Depth, Value) :-
-    minimax(GameState, Depth, _, Value).
+minimax_value(GameState, Depth, Move, Value) :-
+    minimax(GameState, Depth, Move, Value).
 
-% Evaluate the game state by finding the tallest stack created by the player and minimizing opponent's advantage
-evaluate(GameState, Score) :-
-    GameState = state(Board, Player, _, _, BoardSize),
-    findall(Count, (
-        member(Row, Board),
-        member(Player-Count, Row)
-    ), Counts),
-    max_member(TallestStack, Counts),
+% Evaluate the game state by finding the tallest stack created by the move and minimizing opponent's advantage
+evaluate(GameState, Move, Score) :-
+    format('Evaluating Move: ~w~n', [Move]),
+    Move = stack(Y1, X1, Y2, X2),
+    move(GameState, stack(Y1, X1, Y2, X2), state(NewBoard, _, Pieces, _, _)),
+    format('New Pieces List: ~w~n', [Pieces]),
+    nth1(Y2, NewBoard, Row),
+    nth1(X2, Row, Player-NewCount),
+    format('New Stack: Player: ~w, NewCount: ~w~n', [Player, NewCount]),
     opponent(Player, Opponent),
     findall(OpponentDistance, (
-        nth1(Y1, Board, Row),
-        nth1(X1, Row, Player-Count),
-        Count > 0,
-        findall(Distance, (
-            nth1(Y2, Board, OpponentRow),
-            nth1(X2, OpponentRow, Opponent-OpponentCount),
-            nonvar(Count),
-            nonvar(OpponentCount),
-            manhattan_distance(X1, Y1, X2, Y2, Distance)
-        ), Distances),
-        min_list(Distances, OpponentDistance)
+        nth1(Y, NewBoard, OpponentRow),
+        nth1(X, OpponentRow, Opponent-OpponentCount),
+        nonvar(OpponentCount),
+        manhattan_distance(X2, Y2, X, Y, OpponentDistance)
     ), OpponentDistances),
-    sumlist(OpponentDistances, TotalOpponentDistance),
-    findall(PlayerDistance, (
-        nth1(Y1, Board, Row),
-        nth1(X1, Row, Player-Count),
-        Count > 0,
-        findall(Distance, (
-            nth1(Y2, Board, PlayerRow),
-            nth1(X2, PlayerRow, Player-PlayerCount),
-            nonvar(Count),
-            nonvar(PlayerCount),
-            manhattan_distance(X1, Y1, X2, Y2, Distance)
-        ), Distances),
-        min_list(Distances, PlayerDistance)
-    ), PlayerDistances),
-    sumlist(PlayerDistances, TotalPlayerDistance),
-    Score is TallestStack - TotalOpponentDistance + TotalPlayerDistance.
+    format('Opponent Distances: ~w~n', [OpponentDistances]),
+    min_list(OpponentDistances, MinOpponentDistance),
+    findall(FriendlyDistance, (
+        nth1(Y, NewBoard, FriendlyRow),
+        nth1(X, FriendlyRow, Player-FriendlyCount),
+        nonvar(FriendlyCount),
+        manhattan_distance(X2, Y2, X, Y, FriendlyDistance)
+    ), FriendlyDistances),
+    format('Friendly Distances: ~w~n', [FriendlyDistances]),
+    min_list(FriendlyDistances, MinFriendlyDistance),
+    Score is NewCount - MinOpponentDistance + MinFriendlyDistance,
+    format('Evaluating Move: ~w, NewCount: ~w, MinOpponentDistance: ~w, MinFriendlyDistance: ~w, Score: ~w~n', [Move, NewCount, MinOpponentDistance, MinFriendlyDistance, Score]).
 
 % Calculate the Manhattan distance between two coordinates
 manhattan_distance(X1, Y1, X2, Y2, Distance) :-
-    Distance is abs(X1 - X2) + abs(Y1 - Y2).
+    Distance is abs(X1 - X2) + abs(Y1 - Y2),
+    format('Manhattan distance between (~w, ~w) and (~w, ~w): ~w~n', [X1, Y1, X2, Y2, Distance]).
 
 % Calculate the absolute value of a number
 abs(X, AbsX) :-
