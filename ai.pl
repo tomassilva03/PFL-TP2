@@ -99,31 +99,73 @@ choose_greedy_move(GameState, Moves, BestMove) :-
     ), MoveValues),
     max_member(_-BestMove, MoveValues).
 
-% Minimax algorithm with depth limit, focusing on maximizing the value and minimizing opponent's advantage
+% Determine the value for the minimax algorithm
+minimax_value(GameState, Depth, Value) :-
+    minimax(GameState, Depth, _, Value).
+
 minimax(GameState, Depth, BestMove, BestValue) :-
     Depth > 0,
+    GameState = state(_, Player, _, _, _),
     valid_moves(GameState, Moves),
     Moves \= [],
     NewDepth is Depth - 1,
+    format("Depth: ~d, Player: ~w~n", [Depth, Player]),
     findall(Value-Move, (
         member(Move, Moves),
         move(GameState, Move, NewGameState),
         minimax_value(NewGameState, NewDepth, Value)
     ), MoveValues),
+    max_member(BestValue-BestMove, MoveValues),
+    format("    Best Move: ~w, Value: ~d~n", [BestMove, BestValue]).
+
+
+% Base case: when depth is 0, evaluate moves directly
+minimax(GameState, 0, BestMove, BestValue) :-
+    valid_moves(GameState, Moves),
+    findall(Value-Move, (
+        member(Move, Moves),
+        move(GameState, Move, NewGameState),
+        evaluate_move(GameState, Move, NewGameState, Value)
+    ), MoveValues),
     max_member(BestValue-BestMove, MoveValues).
 
-% Base case: evaluate the game state when depth is 0 or no moves are available
-minimax(GameState, 0, _, Value) :-
-    evaluate(GameState, Value).
-
+% Fallback if no moves are available
 minimax(GameState, _, _, Value) :-
     valid_moves(GameState, Moves),
     Moves = [],
-    evaluate(GameState, Value).
+    format("No valid moves. Evaluating game state: ~w~n", [GameState]),
+    evaluate(GameState, Value),
+    format("    Game State Value: ~d~n", [Value]).
 
-% Determine the value for the minimax algorithm
-minimax_value(GameState, Depth, Value) :-
-    minimax(GameState, Depth, _, Value).
+
+evaluate_move(_, Move, NewGameState, Value) :-
+    Move = stack(Y1, X1, Y2, X2),
+    NewGameState = state(NewBoard, _, _, _, _),
+    nth1(Y2, NewBoard, Row),
+    nth1(X2, Row, Player-NewCount),
+    proximity(NewBoard, Y2, X2, Player, OpponentProximity, FriendlyProximity),
+    % Combine the criteria into a weighted value
+    Value is NewCount * 3 + FriendlyProximity + OpponentProximity.
+    format("Evaluating Move: stack(~d, ~d, ~d, ~d)~n", [Y1, X1, Y2, X2]),
+    format("    Stack Height: ~d, Opponent Proximity: ~d, Friendly Proximity: ~d, Value: ~d~n",
+           [NewCount, OpponentProximity, FriendlyProximity, Value]).
+
+proximity(Board, Y, X, Player, OpponentProximity, FriendlyProximity) :-
+    opponent(Player, Opponent),
+    findall(Distance, (
+        nth1(Y1, Board, Row),
+        nth1(X1, Row, Opponent-_),
+        manhattan_distance(X, Y, X1, Y1, Distance)
+    ), OpponentDistances),
+    findall(Distance, (
+        nth1(Y1, Board, Row),
+        nth1(X1, Row, Player-_),
+        (X1 \= X ; Y1 \= Y),  % Exclude the current piece
+        manhattan_distance(X, Y, X1, Y1, Distance)
+    ), FriendlyDistances),
+    % Use the closest distances
+    (OpponentDistances = [] -> OpponentProximity = 1000; min_list(OpponentDistances, OpponentProximity)),
+    (FriendlyDistances = [] -> FriendlyProximity = 0; min_list(FriendlyDistances, FriendlyProximity)).
 
 % Evaluate the game state by finding the tallest stack created by the player and minimizing opponent's advantage
 evaluate(GameState, Score) :-
