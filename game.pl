@@ -184,15 +184,17 @@ initial_state(GameConfig, GameState) :-
 game_loop(GameState, Difficulty1, Difficulty2) :-
     display_game(GameState),
     ( game_over(GameState, Winner) ->
-        ( Winner = e ->
-            format('No more valid moves. The game is a tie!~n', [])
-        ;
-            % Determine the tallest stack for the winner
-            GameState = state(Board, _, _, _, _),
-            tallest_stack(Board, Winner, TallestStack),
-            format('No more valid moves. Game over! Winner: ~w with the tallest stack of ~d pieces!~n', [Winner, TallestStack])
-        )
+        handle_game_over(GameState, Winner)
     ; get_player_move(GameState, Difficulty1, Difficulty2, Move),
       move(GameState, Move, NewGameState),
       game_loop(NewGameState, Difficulty1, Difficulty2)
     ).
+
+% Handle game over scenarios
+handle_game_over(GameState, e) :-
+    format('No more valid moves. The game is a tie!~n', []).
+
+handle_game_over(GameState, Winner) :-
+    GameState = state(Board, _, _, _, _),
+    tallest_stack(Board, Winner, TallestStack),
+    format('No more valid moves. Game over! Winner: ~w with the tallest stack of ~d pieces!~n', [Winner, TallestStack]).

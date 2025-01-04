@@ -34,29 +34,14 @@
 %
 % The `choose_move/3` predicate ensures that the AI selects an appropriate move based on the current game phase and difficulty 
 % level, providing a challenging opponent for the player.
-
+% Main predicate
 choose_move(GameState, Difficulty, Move) :-
-    GameState = state(_, Player, _, Phase, BoardSize),
+    GameState = state(_, _, _, Phase, _),
     valid_moves(GameState, Moves),
-    (Phase = setup ->
-        random_member(Move, Moves)  % Random move for setup phase
-    ;
-        % Choose move based on difficulty level
-        (Difficulty = 1 ->
-            random_member(Move, Moves)  % Random move for level 1
-        ; Difficulty = 2 ->
-            choose_greedy_move(GameState, Moves, Move)  % Greedy move for level 2
-        ; Difficulty = 3 ->
-            % Determine depth based on board size
-            (BoardSize = 4 -> Depth = 6
-            ; BoardSize = 5 -> Depth = 4
-            ; BoardSize = 6 -> Depth = 3
-            ; Depth = 2  % For board sizes 7 and above
-            ),
-            minimax(GameState, Depth, Move, _)  % Minimax move with adaptive depth
-        )
-    ),
+    choose_strategy(Phase, Difficulty, Strategy),
+    call(Strategy, GameState, Moves, Move),
     format('Computer chooses move: ~w~n', [Move]).
+
 
 % value(+GameState, +Move, -Value)
 % Calculate the value of a move by simulating the move and evaluating the resulting game state
@@ -83,21 +68,59 @@ choose_move(GameState, Difficulty, Move) :-
 % The `value/3` predicate provides a way to evaluate the effectiveness of a move by considering the resulting stack 
 % height, which is useful for AI decision-making.
 
-% Calculate the value of a move by simulating the move and evaluating the resulting game state
+% Calculate the value of a move during the play phase
 value(GameState, Move, Value) :-
+    GameState = state(_, Player, _, Phase, _),
+    Phase = play,
     Move = stack(Y1, X1, Y2, X2),
     move(GameState, stack(Y1, X1, Y2, X2), state(NewBoard, _, _, _, BoardSize)),
     nth1(Y2, NewBoard, Row),
     nth1(X2, Row, Player-NewCount),
     Value is NewCount.
 
+% Calculate the value of a move during the setup phase
+value(GameState, Move, Value) :-
+    Move = place(Y, X),
+    GameState = state(Board, Player, _, Phase, _),
+    Phase = setup,
+    proximity(Board, Y, X, Player, OpponentProximity, FriendlyProximity),
+    center_of_board(Board, Y, X, CenterScore),
+    % Adjusted formula: prioritize center, friendly proximity, and disruption
+    Value is (FriendlyProximity * 2) + OpponentProximity + (CenterScore * 3).
+
 % Choose the best move based on the greedy algorithm
 choose_greedy_move(GameState, Moves, BestMove) :-
+    GameState = state(_, _, _, Phase, _),
+    Phase = play,
     findall(Value-Move, (
         member(Move, Moves),
         value(GameState, Move, Value)
     ), MoveValues),
     max_member(_-BestMove, MoveValues).
+
+% Choose the best move based on the greedy algorithm during the setup phase
+choose_greedy_move(GameState, Moves, BestMove) :-
+    GameState = state(_, _, _, Phase, _),
+    Phase = setup,
+    % Generate a list of Value-Move pairs
+    findall(Value-Move, (
+        member(Move, Moves),
+        value(GameState, Move, Value)
+    ), MoveValues),
+    format("Move Values: ~w~n", [MoveValues]),
+    
+    % Find the maximum value
+    findall(Value, member(Value-_, MoveValues), Values),
+    max_member(MaxValue, Values),
+    format("Max Value: ~w~n", [MaxValue]),
+    
+    % Collect all moves with the maximum value
+    findall(Move, member(MaxValue-Move, MoveValues), BestMoves),
+    format("Best Moves: ~w~n", [BestMoves]),
+    
+    % Choose a random move from the best moves
+    random_member(BestMove, BestMoves),
+    format("Best Move: ~w~n", [BestMove]).
 
 % Determine the value for the minimax algorithm
 minimax_value(GameState, Depth, Value) :-
@@ -150,6 +173,9 @@ evaluate_move(_, Move, NewGameState, Value) :-
     format("    Stack Height: ~d, Opponent Proximity: ~d, Friendly Proximity: ~d, Value: ~d~n",
            [NewCount, OpponentProximity, FriendlyProximity, Value]).
 
+default_min_list([], Default, Default).
+default_min_list(List, _, Min) :- min_list(List, Min).
+
 proximity(Board, Y, X, Player, OpponentProximity, FriendlyProximity) :-
     opponent(Player, Opponent),
     findall(Distance, (
@@ -163,9 +189,8 @@ proximity(Board, Y, X, Player, OpponentProximity, FriendlyProximity) :-
         (X1 \= X ; Y1 \= Y),  % Exclude the current piece
         manhattan_distance(X, Y, X1, Y1, Distance)
     ), FriendlyDistances),
-    % Use the closest distances
-    (OpponentDistances = [] -> OpponentProximity = 1000; min_list(OpponentDistances, OpponentProximity)),
-    (FriendlyDistances = [] -> FriendlyProximity = 0; min_list(FriendlyDistances, FriendlyProximity)).
+    default_min_list(OpponentDistances, 1000, OpponentProximity),
+    default_min_list(FriendlyDistances, 0, FriendlyProximity).
 
 % Evaluate the game state by finding the tallest stack created by the player and minimizing opponent's advantage
 evaluate(GameState, Score) :-
@@ -233,3 +258,41 @@ opponent(bluePC, whiteH).
 opponent(whiteH, bluePC).
 opponent(computer1, computer2).
 opponent(computer2, computer1).
+
+center_of_board(Board, Y, X, CenterScore) :-
+    length(Board, Size),
+    MaxDistance is (Size - 1) * 2,  % Maximum Manhattan distance on the board
+    CenterY is (Size + 1) // 2,
+    CenterX is (Size + 1) // 2,
+    manhattan_distance(X, Y, CenterX, CenterY, Distance),
+    CenterScore is MaxDistance - Distance.
+
+% Mapping for move selection based on phase and difficulty
+choose_strategy(setup, 1, random_strategy).
+choose_strategy(setup, 2, greedy_strategy).
+choose_strategy(setup, 3, random_strategy).
+choose_strategy(play, 1, random_strategy).
+choose_strategy(play, 2, greedy_strategy).
+choose_strategy(play, 3, minimax_strategy).
+
+% random_strategy(+Moves, -Move)
+% Choose a random move from the list of valid moves
+random_strategy(GameState, Moves, Move) :-
+    random_member(Move, Moves).
+
+% greedy_strategy(+GameState, +Moves, -Move)
+% Choose the move that maximizes the immediate value based on the greedy algorithm
+greedy_strategy(GameState, Moves, Move) :-
+    choose_greedy_move(GameState, Moves, Move).
+
+% minimax_strategy(+GameState, +Moves, -Move)
+% Dynamically determines the depth based on the board size and chooses the best move using minimax.
+minimax_strategy(GameState, Moves, Move) :-
+    GameState = state(_, _, _, _, BoardSize),
+    determine_depth(BoardSize, Depth),  % Determine depth dynamically based on board size
+    minimax(GameState, Depth, Move, _).
+
+% Fact-based depth determination
+determine_depth(BoardSize, 6) :- BoardSize = 4.  % Small boards (4x4)
+determine_depth(BoardSize, 3) :- BoardSize >= 5, BoardSize =< 6.  % Medium boards (5x5 and 6x6)
+determine_depth(BoardSize, 2) :- BoardSize >= 7.  % Large boards (7x7 and above)
