@@ -1,40 +1,43 @@
 % ai.pl - Contains the AI logic for choosing moves
 
 % choose_move(+GameState, +Difficulty, -Move)
-% Choose a move based on the difficulty level
 %
 % The `choose_move/3` predicate selects a move for the AI player based on the current game state and the specified difficulty 
-% level. It follows these steps:
+% level. This updated implementation eliminates nested conditionals by delegating the move selection to phase- and 
+% difficulty-specific strategies.
 %
-% 1. Extract Game State Information:
-%    The predicate extracts the `Phase` and `BoardSize` from the `GameState` structure to determine whether the game is in 
-%    the setup or play phase and the size of the board.
+% Workflow:
+% 1. **Extract Game Phase and Generate Valid Moves**:
+%    - The `Phase` is extracted from the `GameState` structure to determine if the game is in the `setup` or `play` phase.
+%    - The `valid_moves/2` predicate generates a list of all valid moves for the current player based on the game state.
 %
-% 2. Generate Valid Moves:
-%    The `valid_moves/2` predicate is called to generate a list of all valid moves for the current player based on the game state.
+% 2. **Select a Strategy Based on Phase and Difficulty**:
+%    - The `choose_strategy/3` predicate determines the strategy to use for move selection based on the current phase and 
+%      difficulty level. It maps:
+%        - `setup` phase:
+%          - Difficulty 1: Random move selection using `random_strategy/3`.
+%          - Difficulty 2: Greedy move selection using `greedy_strategy/3`.
+%          - Difficulty 3: Random move selection using `random_strategy/3`.
+%        - `play` phase:
+%          - Difficulty 1: Random move selection using `random_strategy/3`.
+%          - Difficulty 2: Greedy move selection using `greedy_strategy/3`.
+%          - Difficulty 3: Minimax-based move selection using `minimax_strategy/3`.
 %
-% 3. Select Move Based on Phase:
-%    - If the game is in the `setup` phase, the `random_member/2` predicate is used to select a random move from the list 
-%      of valid moves. This ensures that the AI places pieces randomly during the setup phase.
+% 3. **Dynamic Depth for Minimax Strategy**:
+%    - The `minimax_strategy/3` predicate dynamically determines the depth of the search based on the board size:
+%      - Board size ≤ 4: Depth 6
+%      - Board size = 5: Depth 4
+%      - Board size = 6: Depth 3
+%      - Board size ≥ 7: Depth 2
 %
-% 4. Select Move Based on Difficulty:
-%    - If the game is in the `play` phase, the move selection is based on the specified difficulty level:
-%      - Difficulty 1: The `random_member/2` predicate is used to select a random move from the list of valid moves.
-%      - Difficulty 2: The `choose_greedy_move/3` predicate is called to select the move that maximizes the immediate value 
-%        based on the greedy algorithm.
-%      - Difficulty 3: The `minimax/4` predicate is called to select the move that maximizes the long-term value based on the 
-%        minimax algorithm with an adaptive depth based on the board size:
-%        - Board size 4: Depth 6
-%        - Board size 5: Depth 4
-%        - Board size 6: Depth 3
-%        - Board size 7 and above: Depth 2
+% 4. **Execute the Selected Strategy**:
+%    - The selected strategy is invoked using the `call/4` predicate, passing the current game state and valid moves.
 %
-% 5. Print the Selected Move:
-%    The `format/2` predicate is used to print the selected move to the console for debugging purposes.
+% 5. **Output the Selected Move**:
+%    - The selected move is printed to the console using `format/2` for debugging or logging purposes.
 %
-% The `choose_move/3` predicate ensures that the AI selects an appropriate move based on the current game phase and difficulty 
-% level, providing a challenging opponent for the player.
-% Main predicate
+% The `choose_move/3` predicate provides a modular and extensible approach to AI move selection by separating the move
+% selection logic into distinct strategies based on the game phase and difficulty level.
 choose_move(GameState, Difficulty, Move) :-
     GameState = state(_, _, _, Phase, _),
     valid_moves(GameState, Moves),
@@ -44,29 +47,40 @@ choose_move(GameState, Difficulty, Move) :-
 
 
 % value(+GameState, +Move, -Value)
-% Calculate the value of a move by simulating the move and evaluating the resulting game state
 %
-% The `value/3` predicate evaluates the potential outcome of a move by simulating its effect on the game state and 
-% calculating a score. It follows these steps:
+% The `value/3` predicate evaluates the potential outcome of a move by simulating its effect on the game state or analyzing 
+% its strategic position. The calculated value is used to guide AI decision-making during the game. The behavior differs 
+% based on whether the game is in the **play phase** or the **setup phase**.
 %
-% 1. Extract Move Coordinates:
-%    The predicate extracts the coordinates `(Y1, X1)` and `(Y2, X2)` from the `Move` structure, which represents stacking 
-%    a piece from `(Y1, X1)` to `(Y2, X2)`.
+% 1. ** Play Phase: Evaluating Stacking Moves**
+% - In the play phase, a move involves stacking pieces from one position to another.
+% - Steps:
+%   1. The move is represented as `stack(Y1, X1, Y2, X2)`, indicating that the stack at `(Y1, X1)` is moved to `(Y2, X2)`.
+%   2. The `move/3` predicate is called to simulate the move, resulting in an updated game state.
+%   3. The height of the new stack at `(Y2, X2)` is extracted from the updated board.
+%   4. The value of the move is determined by the height (`NewCount`) of the resulting stack.
+% - This approach prioritizes moves that create taller stacks, which are key to winning the game.
 %
-% 2. Simulate the Move:
-%    The `move/3` predicate is called to apply the move to the current `GameState`, resulting in a new game state 
-%    `state(NewBoard, _, _, _, BoardSize)`. This simulates the effect of the move on the board.
+% 2. ** Setup Phase: Evaluating Placement Moves**
+% - In the setup phase, a move involves placing a piece on a neutral cell.
+% - Steps:
+%   1. The move is represented as `place(Y, X)`, indicating a placement at `(Y, X)`.
+%   2. The `proximity/5` predicate calculates the proximity of the position `(Y, X)` to:
+%      - Friendly pieces (`FriendlyProximity`): Encourages clustering for future stacking.
+%      - Opponent pieces (`OpponentProximity`): Encourages disruption of opponent strategy.
+%   3. The `center_of_board/4` predicate calculates the proximity to the center of the board, encouraging central control.
+%   4. A weighted formula combines these factors:
+%      - Friendly proximity is weighted higher to encourage clustering.
+%      - Opponent proximity and central control are secondary priorities.
+% - The resulting value guides placement decisions, balancing offensive and defensive strategies.
 %
-% 3. Extract the New Stack:
-%    The predicate uses `nth1/3` to access the row `Row` at position `Y2` in the `NewBoard`, and then accesses the 
-%    cell at position `X2` in that row. This cell contains the new stack created by the move, represented as `Player-NewCount`.
+% 3. ** Formula for Setup Phase:**
+% `Value is (FriendlyProximity * 2) + OpponentProximity + (CenterScore * 3)`
+% - **Friendly Proximity**: Encourages clustering for stronger stacks.
+% - **Opponent Proximity**: Encourages moves closer to opponents to disrupt their plans.
+% - **Center Score**: Rewards positions closer to the center for better control.
 %
-% 4. Calculate the Value:
-%    The value of the move is determined by the height of the new stack, `NewCount`. This value is assigned to the 
-%    `Value` variable.
-%
-% The `value/3` predicate provides a way to evaluate the effectiveness of a move by considering the resulting stack 
-% height, which is useful for AI decision-making.
+% The `value/3` predicate seamlessly handles both phases, allowing the AI to evaluate moves effectively throughout the game.
 
 % Calculate the value of a move during the play phase
 value(GameState, Move, Value) :-
@@ -87,6 +101,7 @@ value(GameState, Move, Value) :-
     center_of_board(Board, Y, X, CenterScore),
     % Adjusted formula: prioritize center, friendly proximity, and disruption
     Value is (FriendlyProximity * 2) + OpponentProximity + (CenterScore * 3).
+
 
 % Choose the best move based on the greedy algorithm
 choose_greedy_move(GameState, Moves, BestMove) :-
@@ -294,5 +309,6 @@ minimax_strategy(GameState, Moves, Move) :-
 
 % Fact-based depth determination
 determine_depth(BoardSize, 6) :- BoardSize = 4.  % Small boards (4x4)
-determine_depth(BoardSize, 3) :- BoardSize >= 5, BoardSize =< 6.  % Medium boards (5x5 and 6x6)
+determine_depth(BoardSize, 4) :- BoardSize = 5.  % Medium boards (5x5)
+determine_depth(BoardSize, 3) :- BoardSize = 6.  % Medium boards (6x6)
 determine_depth(BoardSize, 2) :- BoardSize >= 7.  % Large boards (7x7 and above)
