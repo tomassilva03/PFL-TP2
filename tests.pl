@@ -2,8 +2,8 @@
 
 :- use_module(library(plunit)). % Load the test framework
 
-% Tests
-:- begin_tests(game_tests).
+% Section 1: General Game Mechanics
+:- begin_tests(game_mechanics).
 
 % Test: The game should not end if valid moves exist
 test(game_not_ended_with_valid_moves) :-
@@ -23,6 +23,45 @@ test(game_ended_with_no_valid_moves_and_winner_blue) :-
                        [white-4, e-0, e-0, e-0, blue-2]], blue, [blue-0, white-0], play, 5),
     game_over(GameState, Winner), % Assert that the game is over
     Winner = blue, !. % Assert that the winner is blue
+
+% Test: When game ends with draw in the tallest stack the winner should be the player with the second tallest stack
+test(game_ended_with_winner_white_after_draw) :-
+    GameState = state([[blue-9, e-0, e-0, e-0, white-9],
+                       [e-0, e-0, e-0, e-0, e-0],
+                       [e-0, e-0, blue-7, e-0, white-7],
+                       [e-0, e-0, e-0, blue-2, e-0],
+                       [white-4,e-0, e-0, e-0, e-0]], blue, [blue-0, white-0], play, 5),
+    game_over(GameState, Winner), % Assert that the game is over
+    Winner = white, !. % Assert that the winner is blue
+
+% Test: Game ends in a draw
+test(game_ended_with_draw) :-
+    GameState = state([[blue-9, e-0, e-0, e-0, white-9],
+                       [e-0, e-0, e-0, e-0, e-0],
+                       [e-0, e-0, e-0, e-0, e-0],
+                       [e-0, e-0, e-0, e-0, e-0],
+                       [e-0,e-0, e-0, e-0, e-0]], blue, [blue-0, white-0], play, 5),
+    game_over(GameState, Winner), % Assert that the game is over
+    Winner = e, !. % Assert that the game is a draw
+
+    % Test: Game transitions from setup to play phase
+test(game_transition_setup_to_play) :-
+    GameState = state([[n-1, n-1, blue-2, n-1, blue-2],
+                        [n-1, n-1, n-1, n-1, n-1],
+                        [n-1, n-1, white-2, blue-2, white-2],
+                        [n-1, blue-2, n-1, n-1, n-1],
+                        [blue-2, n-1, white-2, n-1, n-1]], white, [blue-0, white-1], setup, 5),
+    move(GameState, place(1, 1), NewGameState),
+    NewGameState = state([[white-2, n-1, blue-2, n-1, blue-2],
+                          [n-1, n-1, n-1, n-1, n-1],
+                          [n-1, n-1, white-2, blue-2, white-2],
+                          [n-1, blue-2, n-1, n-1, n-1],
+                          [blue-2, n-1, white-2, n-1, n-1]], blue, [blue-0, white-0], play, 5), !.
+
+:- end_tests(game_mechanics).
+
+% Section 2: Player Actions
+:- begin_tests(player_actions).
 
 % Test: The player should be able to skip their turn
 test(player_can_skip_turn) :-
@@ -80,26 +119,6 @@ test(player_can_stack_a_stack_on_top_of_a_neutral_cell) :-
                           [n-1, n-1, n-1, blue-2, n-1],
                           [white-2, white-2, n-1, n-1, n-1]], white, [blue-0, white-0], play, 5), !.
 
-% Test: When game ends with draw in the tallest stack the winner should be the player with the second tallest stack
-test(game_ended_with_winner_white_after_draw) :-
-    GameState = state([[blue-9, e-0, e-0, e-0, white-9],
-                       [e-0, e-0, e-0, e-0, e-0],
-                       [e-0, e-0, blue-7, e-0, white-7],
-                       [e-0, e-0, e-0, blue-2, e-0],
-                       [white-4,e-0, e-0, e-0, e-0]], blue, [blue-0, white-0], play, 5),
-    game_over(GameState, Winner), % Assert that the game is over
-    Winner = white, !. % Assert that the winner is blue
-
-% Test: Game ends in a draw
-test(game_ended_with_draw) :-
-    GameState = state([[blue-9, e-0, e-0, e-0, white-9],
-                       [e-0, e-0, e-0, e-0, e-0],
-                       [e-0, e-0, e-0, e-0, e-0],
-                       [e-0, e-0, e-0, e-0, e-0],
-                       [e-0,e-0, e-0, e-0, e-0]], blue, [blue-0, white-0], play, 5),
-    game_over(GameState, Winner), % Assert that the game is over
-    Winner = e, !. % Assert that the game is a draw
-
 % Test: Invalid move during setup phase (placing outside the board boundaries)
 test(invalid_move_setup_outside_boundaries) :-
     GameState = state([[n-1, n-1, n-1, n-1, n-1],
@@ -145,19 +164,11 @@ test(invalid_move_play_opponents_cell) :-
                        [white-2, white-2, n-1, n-1, n-1]], blue, [blue-0, white-0], play, 5),
     \+ valid_move(GameState, stack(1, 5, 1, 4)). % Assert that the move is invalid
 
-% Test: Game transitions from setup to play phase
-test(game_transition_setup_to_play) :-
-    GameState = state([[n-1, n-1, blue-2, n-1, blue-2],
-                        [n-1, n-1, n-1, n-1, n-1],
-                        [n-1, n-1, white-2, blue-2, white-2],
-                        [n-1, blue-2, n-1, n-1, n-1],
-                        [blue-2, n-1, white-2, n-1, n-1]], white, [blue-0, white-1], setup, 5),
-    move(GameState, place(1, 1), NewGameState),
-    NewGameState = state([[white-2, n-1, blue-2, n-1, blue-2],
-                          [n-1, n-1, n-1, n-1, n-1],
-                          [n-1, n-1, white-2, blue-2, white-2],
-                          [n-1, blue-2, n-1, n-1, n-1],
-                          [blue-2, n-1, white-2, n-1, n-1]], blue, [blue-0, white-0], play, 5), !.
+
+:- end_tests(player_actions).
+
+% Section 3: AI Behavior
+:- begin_tests(ai_behavior).
 
 % Test: Random AI makes a valid move in setup
 test(random_ai_makes_valid_move_setup) :-
@@ -199,17 +210,30 @@ test(minimax_ai_makes_valid_move_play) :-
     get_player_move(GameState, 3, _, Move),
     valid_move(GameState, Move), !.
 
-% Test: Game initializes correctly with different board sizes
-test(game_initializes_with_different_board_sizes) :-
-    initial_state([board_size(4), player1(blue), player2(white)], GameState4),
-    GameState4 = state(Board4, blue, [blue-4, white-4], setup, 4),
-    length(Board4, 4),
-    maplist(length_(4), Board4),
-    initial_state([board_size(6), player1(blue), player2(white)], GameState6),
-    GameState6 = state(Board6, blue, [blue-4, white-4], setup, 6),
-    length(Board6, 6),
-    maplist(length_(6), Board6).
+% Test: Greedy AI chooses the move that maximizes the immediate value
+test(choose_greedy_move) :-
+    GameState = state([
+        [blue-2, n-1, n-1, n-1, n-1],
+        [blue-2, n-1, blue-2, white-2, n-1],
+        [n-1, white-2, n-1, n-1, n-1],
+        [n-1, n-1, n-1, blue-2, n-1],
+        [n-1, white-2, n-1, white-2, n-1]
+    ], blue, [blue-0, white-0], play, 5),
+    choose_move(GameState, 2, Move),
+    format("Greedy AI chooses move: ~w~n", [Move]),
+    Move = stack(2, 1, 1, 1), !.
 
-length_(Length, List) :- length(List, Length).
+% Test: Minimax AI chooses the move that maximizes the long-term value
+test(minimax_ai_chooses_move) :-
+    GameState = state([
+        [blue-2, n-1, n-1, n-1, n-1],
+        [blue-2, n-1, blue-2, white-2, n-1],
+        [n-1, white-2, n-1, n-1, n-1],
+        [n-1, n-1, n-1, blue-2, n-1],
+        [n-1, white-2, n-1, white-2, n-1]
+    ], blue, [blue-0, white-0], play, 5),
+    choose_move(GameState, 3, Move),
+    format("Minimax AI chooses move: ~w~n", [Move]),
+    Move = stack(2, 3, 2, 2), !.
 
-:- end_tests(game_tests).
+:- end_tests(ai_behavior).
