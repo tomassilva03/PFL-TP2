@@ -115,11 +115,6 @@ The internal game state is represented by a `state/5` structure:
 - `Phase`: The current phase of the game (`setup` or `play`).
 - `BoardSize`: The size of the board.
 
-Example representations:
-- Initial state: `state([[n-1, n-1, n-1, n-1, n-1], [n-1, n-1, n-1, n-1, n-1], [n-1, n-1, n-1, n-1, n-1], [n-1, n-1, n-1, n-1, n-1], [n-1, n-1, n-1, n-1, n-1]], blue, [blue-4, white-4], setup, 5)`
-- Intermediate state: `state([[blue-2, n-1, n-1, n-1, white-2], [blue-2, n-1, n-1, n-1, n-1], [n-1, n-1, blue-2, n-1, white-2], [n-1, n-1, n-1, blue-2, n-1], [white-2, white-2, n-1, n-1, n-1]], blue, [blue-0, white-0], play, 5)`
-- Final state: `state([[blue-9, e-0, e-0, e-0, white-9], [e-0, e-0, e-0, e-0, e-0], [e-0, e-0, blue-7, e-0, white-7], [e-0, e-0, e-0, blue-2, e-0], [white-4, e-0, e-0, e-0, e-0]], blue, [blue-0, white-0], play, 5)`
-
 ### Move Representation
 Moves are represented by structures indicating the type of move and the coordinates involved:
 - `place(Y, X)`: Place a piece at the specified coordinates during the setup phase.
@@ -134,9 +129,10 @@ The game menu system allows players to select the game type, board size, and dif
 ## Conclusions
 
 ### Limitations
-One of the main limitations of the current implementation is the lack of strategic depth during the setup phase. In this phase, players place their pieces on the board, but there isn't much room for strategic decision-making. As a result, the AI uses only the random move selection algorithm during the setup phase, regardless of the chosen difficulty level. This simplifies the setup phase but may not provide the most engaging experience for players looking for a more challenging AI opponent from the start.
+One of the main limitations of the current implementation is the lack of strategic depth for the minimax algorithm during the setup phase. While the greedy algorithm has been implemented to add strategic decision-making during this phase, the minimax AI still relies on random move selection, regardless of the chosen difficulty level. This reduces the effectiveness of the AI's strategy at the start of the game.
 
-Another limitation is the inability to perform input validation for some inputs. While we have implemented validation for player moves during the game, other inputs such as game type, board size, and difficulty level are not fully validated, which may lead to unexpected behavior or errors.
+Another limitation is the inability to perform comprehensive input validation for some inputs. While player moves during the game are validated, inputs such as game type, board size, and difficulty level are not fully validated, which may lead to unexpected behavior or errors.
+
 
 ### Possible Improvements
 1. **Enhanced AI for Setup Phase:**
@@ -162,28 +158,53 @@ The development of the STAQS game in Prolog has been a valuable learning experie
 ## Minimax Algorithm Strategy
 
 ### Overview
-The minimax algorithm is used to determine the best move for the AI by simulating all possible moves and their outcomes up to a certain depth. It aims to maximize the AI's advantage while minimizing the opponent's advantage. The algorithm evaluates the game state and assigns a score based on the potential outcomes.
+The minimax algorithm is employed to select the most advantageous move for the AI by evaluating all potential game states up to a specified depth. The algorithm alternates between maximizing the AI's score and minimizing the opponent's advantage, ensuring the AI makes strategic decisions.
 
-### Strategy
-1. **Move Simulation:**
-   - The algorithm simulates all possible moves for the AI and the opponent up to a specified depth.
-   - For each move, it generates a new game state and recursively evaluates the resulting game states.
+### Implementation Details
 
-2. **Evaluation Function:**
-   - The evaluation function assigns a score to each game state based on three factors: the tallest stack created by the AI, the proximity of the AI's stacks to the opponent's stacks, and the proximity of the AI's stacks to its own stacks.
-   - The score is calculated by finding the maximum stack height for the AI's pieces on the board, subtracting the total distance of the AI's stacks from the opponent's stacks, and adding the total distance of the AI's stacks from its own stacks. This encourages the AI to create tall stacks while positioning its stacks close to both the opponent's stacks (to limit their available moves) and its own stacks (to maximize its potential moves).
+1. **Dynamic Depth Adjustment**:
+   - The depth of the minimax search adapts to the board size to balance computational cost and strategic complexity:
+     - **Board Size ≤ 4**: Depth = 6
+     - **Board Size = 5**: Depth = 4
+     - **Board Size = 6**: Depth = 3
+     - **Board Size ≥ 7**: Depth = 2
 
-3. **Maximizing and Minimizing:**
-   - The algorithm alternates between maximizing the AI's score and minimizing the opponent's score.
-   - At each level of the recursion, the algorithm chooses the move that maximizes the AI's score if it is the AI's turn, or minimizes the opponent's score if it is the opponent's turn.
+2. **Move Simulation**:
+   - The algorithm simulates all valid moves for both the AI and its opponent.
+   - Each move generates a new game state, which is recursively evaluated.
 
-4. **Depth Limit:**
-   - The algorithm uses a depth limit to control the number of levels it explores in the game tree.
-   - When the depth limit is reached, the evaluation function is used to assign a score to the game state.
+3. **Evaluation Function**:
+   - During the **setup phase**, the value of a move is based on:
+     - Proximity to friendly stacks to encourage clustering.
+     - Proximity to opponent stacks to disrupt their strategy.
+     - Proximity to the center of the board for better control.
+   - During the **play phase**, the value of a move is determined by:
+     - The height of the resulting stack.
+     - Strategic proximity to friendly and opponent stacks.
 
-5. **Best Move Selection:**
-   - After evaluating all possible moves, the algorithm selects the move with the highest score for the AI.
-   - This move is considered the best move based on the current game state and the specified depth.
+   - **Formula for setup phase**:
+     ```
+     Value = (FriendlyProximity × 2) + OpponentProximity + (CenterScore × 3)
+     ```
+   - **Formula for play phase**:
+      ```
+         Value = (StackHeight × 3) + FriendlyProximity + OpponentProximity
+      ```
+
+4. **Maximizing and Minimizing**:
+   - The algorithm alternates between choosing the move with the highest score for the AI and the lowest score for the opponent.
+
+5. **Base Case**:
+   - When the specified depth is reached or no valid moves are available, the evaluation function assigns a static score to the game state.
+
+6. **Best Move Selection**:
+   - The algorithm evaluates all moves and selects the one with the highest score for the AI.
+   - In case of multiple moves with the same score, a random selection is made among them.
+
+### Key Features:
+- The implementation integrates move simulation, evaluation, and strategic depth adjustment, making the AI both efficient and strategic.
+- The AI adapts dynamically to varying board sizes and phases of the game, ensuring optimal gameplay across scenarios.
+
 
 ## Tests
 
@@ -203,37 +224,41 @@ To run the tests, follow these steps:
     run_tests.
     ```
 
-### Test Cases
-The test suite includes the following test cases:
+## Tests
 
-1. **Game State Tests:**
-    - `game_not_ended_with_valid_moves`: Ensures the game does not end if valid moves exist.
-    - `game_ended_with_no_valid_moves_and_winner_blue`: Ensures the game ends correctly and determines the winner when no valid moves exist.
-    - `game_ended_with_winner_white_after_draw`: Ensures the correct winner is determined in case of a draw in the tallest stack.
-    - `game_ended_with_draw`: Ensures the game ends in a draw when no valid moves exist and no player has a taller stack.
-    - `game_transition_setup_to_play`: Ensures the game transitions from setup phase to play phase.
+### Overview
+The STAQS game includes a comprehensive suite of tests implemented using the Prolog `plunit` library. These tests ensure the correctness and robustness of the game's logic, including game state transitions, move validation, and AI behavior.
 
-2. **Move Validation Tests:**
-    - `player_can_skip_turn`: Ensures a player can skip their turn if no valid moves are available.
-    - `player_can_place_piece_on_board`: Ensures a player can place a piece on the board during the setup phase.
-    - `player_can_stack_a_stack_on_top_of_another_stack`: Ensures a player can stack a piece on top of another stack.
-    - `player_can_stack_a_stack_on_top_of_a_neutral_cell`: Ensures a player can stack a piece on top of a neutral cell.
-    - `invalid_move_setup_outside_boundaries`: Ensures an invalid move is detected when placing a piece outside the board boundaries during the setup phase.
-    - `invalid_move_setup_occupied_cell`: Ensures an invalid move is detected when placing a piece on an occupied cell during the setup phase.
-    - `invalid_move_play_non_adjacent_cell`: Ensures an invalid move is detected when stacking a piece on a non-adjacent cell during the play phase.
-    - `invalid_move_play_non_orthogonal_cell`: Ensures an invalid move is detected when stacking a piece on a non-orthogonal cell during the play phase.
-    - `invalid_move_play_opponents_cell`: Ensures an invalid move is detected when stacking a piece from an opponent's cell during the play phase.
+### Running the Tests
+To run the tests, follow these steps:
+
+1. **Launch SICStus Prolog and consult the `game.pl` file:**
+    ```prolog
+    ['path/to/game.pl'].
+    ```
+
+2. **Run the tests:**
+    ```prolog
+    run_tests.
+    ```
+
+### Test Categories
+
+1. **Game Mechanics Tests:**
+   This section focuses on validating the core game mechanics, including transitions between phases and game-ending conditions. Tests ensure that the game behaves correctly under various scenarios, such as determining the winner, handling draws, and transitioning from the setup phase to the play phase.
+
+2. **Player Actions Tests:**
+   These tests verify the validity of player actions during the game. They cover scenarios like skipping turns, placing pieces, stacking moves, and handling invalid moves (e.g., placing a piece on an occupied cell or stacking onto non-adjacent cells). This section ensures that players and the game logic follow the rules correctly.
 
 3. **AI Behavior Tests:**
-    - `random_ai_makes_valid_move_setup`: Ensures the random AI makes a valid move during the setup phase.
-    - `random_ai_makes_valid_move_play`: Ensures the random AI makes a valid move during the play phase.
-    - `greedy_ai_makes_valid_move_play`: Ensures the greedy AI makes a valid move during the play phase.
-    - `minimax_ai_makes_valid_move_play`: Ensures the minimax AI makes a valid move during the play phase.
+   This section tests the behavior of different AI strategies, including random, greedy, and minimax algorithms. It validates that the AI makes legal and strategic moves according to its selected difficulty level and gameplay phase. Tests also evaluate the AI's ability to maximize short-term or long-term advantages based on the chosen strategy.
 
-4. **Game Initialization Tests:**
-    - `game_initializes_with_different_board_sizes`: Ensures the game initializes correctly with different board sizes.
+### Notes
+- The tests are structured to cover all critical aspects of the game's logic and functionality.
+- By running these tests, you can ensure the game's reliability and identify potential issues in edge cases or complex scenarios.
+- The comprehensive test suite provides confidence in the game's implementation, especially for AI behavior and rule enforcement.
 
-These tests help ensure that the game logic is functioning correctly and that the AI behaves as expected under various conditions.
+
 
 ## Images
 
