@@ -137,6 +137,7 @@ choose_greedy_move(GameState, Moves, BestMove) :-
 minimax_value(GameState, Depth, Value) :-
     minimax(GameState, Depth, _, Value).
 
+% Recursive case: when depth is greater than 0, recursively evaluate moves
 minimax(GameState, Depth, BestMove, BestValue) :-
     Depth > 0,
     GameState = state(_, Player, _, _, _),
@@ -166,6 +167,7 @@ minimax(GameState, _, _, Value) :-
     Moves = [],
     evaluate(GameState, Value).
 
+% Evaluate the move based on the resulting game state
 evaluate_move(_, Move, NewGameState, Value) :-
     Move = stack(Y1, X1, Y2, X2),
     NewGameState = state(NewBoard, _, _, _, _),
@@ -175,9 +177,11 @@ evaluate_move(_, Move, NewGameState, Value) :-
     % Combine the criteria into a weighted value
     Value is NewCount * 3 + FriendlyProximity + OpponentProximity.
 
+% Find the minimum value in a list or return the default value if the list is empty
 default_min_list([], Default, Default).
 default_min_list(List, _, Min) :- min_list(List, Min).
 
+% Calculate the proximity of a position to friendly and opponent pieces
 proximity(Board, Y, X, Player, OpponentProximity, FriendlyProximity) :-
     opponent(Player, Opponent),
     findall(Distance, (
@@ -263,6 +267,7 @@ opponent(whiteH, bluePC).
 opponent(computer1, computer2).
 opponent(computer2, computer1).
 
+% Calculate the proximity to the center of the board
 center_of_board(Board, Y, X, CenterScore) :-
     length(Board, Size),
     MaxDistance is (Size - 1) * 2,  % Maximum Manhattan distance on the board
