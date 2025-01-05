@@ -58,32 +58,29 @@ valid_move(GameState, Move) :-
 valid_move(state(_, _, _, play, _), skip).
 
 % move(+GameState, +Move, -NewGameState)
-% Apply the move to the game state and return the new state
 %
-% The `move/3` predicate updates the game state based on the player's move. It handles different types of moves and transitions 
-% the game state accordingly. It follows these steps:
+% The `move/3` predicate updates the game state based on the player's move. It supports three main types of moves:
 %
-% 1. Skip Move:
-%    - If the move is `skip`, the current player skips their turn.
-%    - The `next_player/2` predicate is called to switch to the next player.
-%    - The game state is updated with the same board and pieces, but with the next player.
+% 1. **Skip Move**:
+%    - Occurs during the play phase when a player opts to skip their turn.
+%    - The game state is updated to reflect the same board and pieces, but the current player switches to the next one.
 %
-% 2. Place Move (Setup Phase):
-%    - If the move is `place(Y, X)`, the current player places a piece on the board during the setup phase.
-%    - The `place_piece/4` predicate is called to place the piece on the board.
-%    - The `next_player/2` predicate is called to switch to the next player.
-%    - The `update_pieces/4` predicate is called to update the number of remaining pieces for the current player.
-%    - If all pieces are placed, the game phase transitions to `play`; otherwise, it remains in `setup`.
+% 2. **Place Move (Setup Phase)**:
+%    - A player places a piece on the board during the setup phase.
+%    - The `place_piece/4` predicate handles the placement of the piece on the board.
+%    - The `next_player/2` predicate switches the current player.
+%    - The `update_pieces/4` predicate updates the number of remaining pieces for the player.
+%    - The game phase transitions to `play` if all pieces are placed; otherwise, it remains in `setup`.
 %
-% 3. Stack Move (Play Phase):
-%    - If the move is `stack(Y1, X1, Y2, X2)`, the current player stacks a piece from one cell to an adjacent cell during the 
-%      play phase.
-%    - The `stack_piece/5` predicate is called to stack the piece on the board.
-%    - The `next_player/2` predicate is called to switch to the next player.
-%    - The `update_pieces/4` predicate is called, but the number of pieces does not change during the play phase.
+% 3. **Stack Move (Play Phase)**:
+%    - A player stacks a piece from one cell to another during the play phase.
+%    - The `stack_piece/5` predicate updates the board to reflect the stacking move.
+%    - The `next_player/2` predicate switches the current player.
+%    - The `update_pieces/4` predicate maintains the piece counts as unchanged during the play phase.
 %
-% The `move/3` predicate ensures that the game state is updated correctly based on the player's move, maintaining the integrity of 
-% the game logic.
+% The `move/3` predicate ensures accurate updates to the game state based on the current phase and the player's move.
+% It leverages helper predicates to manage board updates, phase transitions, and player switches, maintaining game integrity.
+
 
 % Skip Move
 move(GameState, Move, NewGameState) :-

@@ -121,14 +121,14 @@ choose_greedy_move(GameState, Moves, BestMove) :-
     findall(Value-Move, (
         member(Move, Moves),
         value(GameState, Move, Value)
-    ), MoveValues).
+    ), MoveValues),
     
     % Find the maximum value
     findall(Value, member(Value-_, MoveValues), Values),
-    max_member(MaxValue, Values).
+    max_member(MaxValue, Values),
     
     % Collect all moves with the maximum value
-    findall(Move, member(MaxValue-Move, MoveValues), BestMoves).
+    findall(Move, member(MaxValue-Move, MoveValues), BestMoves),
     
     % Choose a random move from the best moves
     random_member(BestMove, BestMoves).
