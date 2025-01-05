@@ -157,7 +157,7 @@ initial_state(GameConfig, GameState) :-
     ( member(player2(Player2), GameConfig) -> true ; Player2 = white ),
     ( member(player1_name(Player1Name), GameConfig) -> true ; Player1Name = 'Player 1' ),
     ( member(player2_name(Player2Name), GameConfig) -> true ; Player2Name = 'Player 2' ),
-    ( member(difficulty(Level), GameConfig) -> true ; Level = 1 ),
+    ( member(difficulty(Level), GameConfig) -> true ; Level = 1 ), % (Can't remove these ifs otherwise major performance issues)
     
     % Initialize the board based on the board size
     initialize_board(BoardSize, Board),
@@ -179,16 +179,20 @@ initial_state(GameConfig, GameState) :-
     format('Player 1: ~w (~w)~n', [Player1, Player1Name]),
     format('Player 2: ~w (~w)~n', [Player2, Player2Name]).
 
-% game_loop(+GameState, +Difficulty1, +Difficulty2)
-% Main game loop
-game_loop(GameState, Difficulty1, Difficulty2) :-
+% Main game loop: game is over
+game_loop(GameState, _, _) :-
+    game_over(GameState, Winner),
     display_game(GameState),
-    ( game_over(GameState, Winner) ->
-        handle_game_over(GameState, Winner)
-    ; get_player_move(GameState, Difficulty1, Difficulty2, Move),
-      move(GameState, Move, NewGameState),
-      game_loop(NewGameState, Difficulty1, Difficulty2)
-    ).
+    handle_game_over(GameState, Winner).
+
+% Main game loop: game is not over
+game_loop(GameState, Difficulty1, Difficulty2) :-
+    \+ game_over(GameState, _), % Negate the game-over condition
+    display_game(GameState),
+    get_player_move(GameState, Difficulty1, Difficulty2, Move),
+    move(GameState, Move, NewGameState),
+    game_loop(NewGameState, Difficulty1, Difficulty2).
+
 
 % Handle game over scenarios
 handle_game_over(GameState, e) :-
