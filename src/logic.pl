@@ -1,32 +1,35 @@
 % logic.pl - Contains the game logic and rules
 
-% Get the player's move
 get_player_move(GameState, Difficulty1, Difficulty2, Move) :-
-    GameState = state(_, Player, _, Phase, BoardSize),
+    GameState = state(_, Player, _, _, _),
     valid_moves(GameState, Moves),
-    (Moves = [] ->
-        % No moves available, skip the turn
-        format('Player ~w has no valid moves and will skip their turn.~n', [Player]),
-        Move = skip
-    ; (Player = whitePC ->
-        choose_move(GameState, Difficulty1, Move)
-    ; Player = bluePC ->
-        choose_move(GameState, Difficulty1, Move)
-    ; Player = computer1 ->
-        choose_move(GameState, Difficulty1, Move)
-    ; Player = computer2 ->
-        choose_move(GameState, Difficulty2, Move)
-    ; % Otherwise, prompt the human player for input
-        format('Enter your move, X = row, Y = column (e.g., place(X,Y) in setup or stack(X,Y,A,B)/skip in play phase): ~n', []),
-        prompt(_, 'Move: '),  % Set custom prompt
-        read(InputMove),
-        prompt(_, '|: '),  % Reset the prompt to the default
-        (valid_move(GameState, InputMove) ->
-            Move = InputMove
-        ; format('Invalid move! Try again.~n', []),
-          get_player_move(GameState, Difficulty1, Difficulty2, Move)
-        )
-    )).
+    get_move(GameState, Player, Moves, Difficulty1, Difficulty2, Move).
+
+% Case: No valid moves, skip the turn
+get_move(_, Player, [], _, _, skip) :-
+    format('Player ~w has no valid moves and will skip their turn.~n', [Player]).
+
+% Case: Computer player chooses a move based on difficulty
+get_move(GameState, whitePC, _, Difficulty1, _, Move) :- choose_move(GameState, Difficulty1, Move).
+get_move(GameState, bluePC, _, Difficulty1, _, Move) :- choose_move(GameState, Difficulty1, Move).
+get_move(GameState, computer1, _, Difficulty1, _, Move) :- choose_move(GameState, Difficulty1, Move).
+get_move(GameState, computer2, _, _, Difficulty2, Move) :- choose_move(GameState, Difficulty2, Move).
+
+% Case: Human player enters a move
+get_move(GameState, Player, Moves, _, _, Move) :-
+    format('Enter your move (e.g., place(X, Y) or stack(X1, Y1, X2, Y2)/skip): ~n', []),
+    prompt(_, 'Move: '),
+    read(InputMove),
+    prompt(_, '|: '),  % Reset the prompt to the default
+    validate_human_move(GameState, InputMove, Moves, Player, Move).
+
+% Validate the move entered by the human player
+validate_human_move(GameState, InputMove, Moves, _, InputMove) :-
+    member(InputMove, Moves).
+validate_human_move(GameState, _, Moves, Player, Move) :-
+    format('Invalid move! Try again.~n', []),
+    get_move(GameState, Player, Moves, _, _, Move).
+
 
 % Check if the move is valid in the setup phase
 valid_move(GameState, Move) :-
@@ -97,7 +100,12 @@ move(GameState, Move, NewGameState) :-
     place_piece(Board, X, Y, Player, NewBoard),
     next_player(Player, NextPlayer),
     update_pieces(Player, Pieces, NewPieces, setup),
-    (NewPieces = [Player1-0, Player2-0] -> NewPhase = play ; NewPhase = setup).  % Transition to play phase if all pieces are placed
+    determine_phase(NewPieces, NewPhase).
+
+% Helper predicate to determine the next phase based on remaining pieces
+determine_phase([Player1-0, Player2-0], play).
+determine_phase(_, setup).
+
 
 % Stack Move (Play Phase)
 move(GameState, Move, NewGameState) :-
@@ -107,36 +115,55 @@ move(GameState, Move, NewGameState) :-
     stack_piece(Board, X1, Y1, X2, Y2, NewBoard),
     next_player(Player, NextPlayer),
     update_pieces(Player, Pieces, NewPieces, play).  % Do not decrement pieces during the play phase
-% Place a piece on the board
+    
+% Place a piece on a neutral cell
 place_piece(Board, X, Y, Player, NewBoard) :-
     nth1(Y, Board, Row),
-    nth1(X, Row, Cell),
-    ( Cell = n-1 ->  % If the cell is neutral
-        NewCell = Player-2  % Add the player's piece on top of the neutral piece
-    ; Cell = Player-Count ->  % If the cell already belongs to the player
-        NewCell = Player-(Count+1)  % Increment the count
-    ; format('Invalid move: cell already occupied by opponent.~n'), fail  % Cell occupied by the opponent
-    ),
+    nth1(X, Row, n-1),  % Match neutral cell
+    NewCell = Player-2, % Add the player's piece
     replace_element(Row, X, NewCell, NewRow),
     replace_board(Board, Y, NewRow, NewBoard).
 
-% Stack a piece on top of another
-stack_piece(Board, X1, Y1, X2, Y2, NewBoard) :-
+% Place a piece on a cell that already belongs to the player
+place_piece(Board, X, Y, Player, NewBoard) :-
+    nth1(Y, Board, Row),
+    nth1(X, Row, Player-Count),  % Match player's cell
+    NewCell = Player-(Count+1),  % Increment the count
+    replace_element(Row, X, NewCell, NewRow),
+    replace_board(Board, Y, NewRow, NewBoard).
+
+% Fail if the cell is occupied by an opponent
+place_piece(Board, X, Y, _, _) :-
+    nth1(Y, Board, Row),
+    nth1(X, Row, Cell),
+    Cell \= n-1,  % Ensure the cell is not neutral
+    Cell \= Player-_,  % Ensure the cell does not belong to the player
+    format('Invalid move: cell already occupied by opponent.~n'),
+    fail.
+
+
+% Stack a piece on top of another in the same row
+stack_piece(Board, X1, Y, X2, Y, NewBoard) :- % Source and destination are in the same row
+    nth1(Y, Board, SourceRow),
+    nth1(X1, SourceRow, SourceStack),
+    nth1(X2, SourceRow, DestStack),
+    calculate_new_stack(SourceStack, DestStack, NewStack),
+    replace_element(SourceRow, X1, e-0, TempRow), % Update source cell
+    replace_element(TempRow, X2, NewStack, UpdatedRow), % Update destination cell
+    replace_board(Board, Y, UpdatedRow, NewBoard).
+
+% Stack a piece on top of another in different rows
+stack_piece(Board, X1, Y1, X2, Y2, NewBoard) :- % Source and destination are in different rows
     nth1(Y1, Board, SourceRow),
     nth1(X1, SourceRow, SourceStack),
     nth1(Y2, Board, DestRow),
     nth1(X2, DestRow, DestStack),
     calculate_new_stack(SourceStack, DestStack, NewStack),
-    (Y1 =:= Y2 ->  % If the source and destination are in the same row
-        replace_element(SourceRow, X1, e-0, TempRow),  % Update source cell
-        replace_element(TempRow, X2, NewStack, UpdatedRow),  % Update destination cell
-        replace_board(Board, Y1, UpdatedRow, NewBoard)  % Replace the updated row
-    ; % Source and destination are in different rows
-        replace_element(SourceRow, X1, e-0, UpdatedSourceRow),
-        replace_element(DestRow, X2, NewStack, UpdatedDestRow),
-        replace_board(Board, Y1, UpdatedSourceRow, TempBoard),
-        replace_board(TempBoard, Y2, UpdatedDestRow, NewBoard)
-    ).
+    replace_element(SourceRow, X1, e-0, UpdatedSourceRow), % Update source cell
+    replace_element(DestRow, X2, NewStack, UpdatedDestRow), % Update destination cell
+    replace_board(Board, Y1, UpdatedSourceRow, TempBoard),
+    replace_board(TempBoard, Y2, UpdatedDestRow, NewBoard).
+
 
 % Switch between players
 % For blue vs white
@@ -198,16 +225,28 @@ tallest_stack(Board, Winner, TallestStack) :-
     reverse(SortedCountsPlayers, DescendingCountsPlayers),
     determine_winner(DescendingCountsPlayers, Winner, TallestStack).
 
-% Determine the winner and the tallest stack size
+% Case: Two or more stacks, and the tallest two are equal
 determine_winner([Count1-Player1, Count2-Player2 | Rest], Winner, TallestStack) :-
-    ( Count1 =:= Count2 ->
-        determine_winner(Rest, Winner, TallestStack)
-    ;
-        Winner = Player1,
-        TallestStack = Count1
-    ).
+    counts_equal(Count1, Count2),
+    determine_winner(Rest, Winner, TallestStack).
+
+% Case: Two or more stacks, and the tallest stack is unique
+determine_winner([Count1-Player1, Count2-Player2 | _], Player1, Count1) :-
+    counts_not_equal(Count1, Count2).
+
+% Case: Only one stack remains
 determine_winner([Count-Player | _], Player, Count).
-determine_winner([], no_winner, 0). % In case there are no valid stacks
+
+% Case: No valid stacks
+determine_winner([], no_winner, 0).
+
+% Helper predicate to check if two counts are equal
+counts_equal(Count, Count).
+
+% Helper predicate to check if two counts are not equal
+counts_not_equal(Count1, Count2) :-
+    Count1 \= Count2.
+
 
 % Check if there are no more valid moves
 no_more_moves(state(Board, Player, Pieces, Phase, BoardSize)) :-
