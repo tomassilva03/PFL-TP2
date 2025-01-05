@@ -142,28 +142,23 @@ place_piece(Board, X, Y, _, _) :-
     fail.
 
 
-% Stack a piece on top of another in the same row
-stack_piece(Board, X1, Y, X2, Y, NewBoard) :- % Source and destination are in the same row
-    nth1(Y, Board, SourceRow),
-    nth1(X1, SourceRow, SourceStack),
-    nth1(X2, SourceRow, DestStack),
-    calculate_new_stack(SourceStack, DestStack, NewStack),
-    replace_element(SourceRow, X1, e-0, TempRow), % Update source cell
-    replace_element(TempRow, X2, NewStack, UpdatedRow), % Update destination cell
-    replace_board(Board, Y, UpdatedRow, NewBoard).
-
-% Stack a piece on top of another in different rows
-stack_piece(Board, X1, Y1, X2, Y2, NewBoard) :- % Source and destination are in different rows
+% Stack a piece on top of another
+stack_piece(Board, X1, Y1, X2, Y2, NewBoard) :-
     nth1(Y1, Board, SourceRow),
     nth1(X1, SourceRow, SourceStack),
     nth1(Y2, Board, DestRow),
     nth1(X2, DestRow, DestStack),
     calculate_new_stack(SourceStack, DestStack, NewStack),
-    replace_element(SourceRow, X1, e-0, UpdatedSourceRow), % Update source cell
-    replace_element(DestRow, X2, NewStack, UpdatedDestRow), % Update destination cell
-    replace_board(Board, Y1, UpdatedSourceRow, TempBoard),
-    replace_board(TempBoard, Y2, UpdatedDestRow, NewBoard).
-
+    (Y1 =:= Y2 ->  % If the source and destination are in the same row (can't remove this if otherwise performance drops significantly)
+        replace_element(SourceRow, X1, e-0, TempRow),  % Update source cell
+        replace_element(TempRow, X2, NewStack, UpdatedRow),  % Update destination cell
+        replace_board(Board, Y1, UpdatedRow, NewBoard)  % Replace the updated row
+    ; % Source and destination are in different rows
+        replace_element(SourceRow, X1, e-0, UpdatedSourceRow),
+        replace_element(DestRow, X2, NewStack, UpdatedDestRow),
+        replace_board(Board, Y1, UpdatedSourceRow, TempBoard),
+        replace_board(TempBoard, Y2, UpdatedDestRow, NewBoard)
+    ).
 
 % Switch between players
 % For blue vs white
@@ -246,7 +241,6 @@ counts_equal(Count, Count).
 % Helper predicate to check if two counts are not equal
 counts_not_equal(Count1, Count2) :-
     Count1 \= Count2.
-
 
 % Check if there are no more valid moves
 no_more_moves(state(Board, Player, Pieces, Phase, BoardSize)) :-

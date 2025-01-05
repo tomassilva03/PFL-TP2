@@ -250,13 +250,15 @@ evaluate(GameState, Score) :-
 manhattan_distance(X1, Y1, X2, Y2, Distance) :-
     Distance is abs(X1 - X2) + abs(Y1 - Y2).
 
-% Calculate the absolute value of a number
+% Case: Non-negative numbers
+abs(X, X) :-
+    X >= 0.
+
+% Case: Negative numbers
 abs(X, AbsX) :-
-    (X >= 0 ->
-        AbsX = X
-    ;
-        AbsX is -X
-    ).
+    X < 0,
+    AbsX is -X.
+
 
 % Find the minimum value in a list
 min_list([Min], Min).
