@@ -138,7 +138,6 @@ place_piece(Board, X, Y, _, _) :-
     nth1(X, Row, Cell),
     Cell \= n-1,  % Ensure the cell is not neutral
     Cell \= Player-_,  % Ensure the cell does not belong to the player
-    format('Invalid move: cell already occupied by opponent.~n'),
     fail.
 
 

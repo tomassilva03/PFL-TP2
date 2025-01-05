@@ -121,21 +121,17 @@ choose_greedy_move(GameState, Moves, BestMove) :-
     findall(Value-Move, (
         member(Move, Moves),
         value(GameState, Move, Value)
-    ), MoveValues),
-    format("Move Values: ~w~n", [MoveValues]),
+    ), MoveValues).
     
     % Find the maximum value
     findall(Value, member(Value-_, MoveValues), Values),
-    max_member(MaxValue, Values),
-    format("Max Value: ~w~n", [MaxValue]),
+    max_member(MaxValue, Values).
     
     % Collect all moves with the maximum value
-    findall(Move, member(MaxValue-Move, MoveValues), BestMoves),
-    format("Best Moves: ~w~n", [BestMoves]),
+    findall(Move, member(MaxValue-Move, MoveValues), BestMoves).
     
     % Choose a random move from the best moves
-    random_member(BestMove, BestMoves),
-    format("Best Move: ~w~n", [BestMove]).
+    random_member(BestMove, BestMoves).
 
 % Determine the value for the minimax algorithm
 minimax_value(GameState, Depth, Value) :-
@@ -147,15 +143,12 @@ minimax(GameState, Depth, BestMove, BestValue) :-
     valid_moves(GameState, Moves),
     Moves \= [],
     NewDepth is Depth - 1,
-    format("Depth: ~d, Player: ~w~n", [Depth, Player]),
     findall(Value-Move, (
         member(Move, Moves),
         move(GameState, Move, NewGameState),
         minimax_value(NewGameState, NewDepth, Value)
     ), MoveValues),
-    max_member(BestValue-BestMove, MoveValues),
-    format("    Best Move: ~w, Value: ~d~n", [BestMove, BestValue]).
-
+    max_member(BestValue-BestMove, MoveValues).
 
 % Base case: when depth is 0, evaluate moves directly
 minimax(GameState, 0, BestMove, BestValue) :-
@@ -171,10 +164,7 @@ minimax(GameState, 0, BestMove, BestValue) :-
 minimax(GameState, _, _, Value) :-
     valid_moves(GameState, Moves),
     Moves = [],
-    format("No valid moves. Evaluating game state: ~w~n", [GameState]),
-    evaluate(GameState, Value),
-    format("    Game State Value: ~d~n", [Value]).
-
+    evaluate(GameState, Value).
 
 evaluate_move(_, Move, NewGameState, Value) :-
     Move = stack(Y1, X1, Y2, X2),
@@ -184,9 +174,6 @@ evaluate_move(_, Move, NewGameState, Value) :-
     proximity(NewBoard, Y2, X2, Player, OpponentProximity, FriendlyProximity),
     % Combine the criteria into a weighted value
     Value is NewCount * 3 + FriendlyProximity + OpponentProximity.
-    format("Evaluating Move: stack(~d, ~d, ~d, ~d)~n", [Y1, X1, Y2, X2]),
-    format("    Stack Height: ~d, Opponent Proximity: ~d, Friendly Proximity: ~d, Value: ~d~n",
-           [NewCount, OpponentProximity, FriendlyProximity, Value]).
 
 default_min_list([], Default, Default).
 default_min_list(List, _, Min) :- min_list(List, Min).
