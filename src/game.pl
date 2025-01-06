@@ -1,4 +1,4 @@
-% ['/Users/tomassilva/PFL_TP2_T15_STAQS_09/src/game.pl'].  % Load the game file
+% ['/Users/tomassilva/PFL_TP2_T15_STAQS_9/src/game.pl'].  % Load the game file
 % game.pl - Contains the main game loop and setup
 
 :- [display, logic, ai, tests].  % Include other modules.
